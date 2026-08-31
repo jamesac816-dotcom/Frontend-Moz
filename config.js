@@ -9,7 +9,7 @@
    deixe como está (http://localhost:4000/api).
 ========================================================= */
 // Detecta automaticamente base da API em desenvolvimento (localhost ou file://)
-let API_BASE = 'https://https://mozbackend.up.railway.app/api';
+let API_BASE = 'https://mozbackend.up.railway.app/api';
 try{
   if (typeof window !== 'undefined'){
     const host = window.location.hostname;
