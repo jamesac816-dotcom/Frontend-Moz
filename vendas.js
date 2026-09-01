@@ -171,6 +171,14 @@ async function finalizarVenda(){
     appliedFromBalance = Math.min(credit, total);
   }
 
+  if(cliente && cliente.saldoDevedor >= 0){
+    const saldoTexto = formatMZN(cliente.saldoDevedor);
+    const confirmarDivida = window.confirm(
+      `Cliente "${cliente.nome}" não tem saldo disponível.\n\nSaldo actual: ${saldoTexto}\n\nVai fazer dívida nesta venda?`
+    );
+    if (!confirmarDivida) return;
+  }
+
   // Validação de limite de crédito (novo)
   if(cliente && cliente.saldoDevedor >= 0){
     const limitePadrao = 5000; // MT — ajustar conforme política da empresa
