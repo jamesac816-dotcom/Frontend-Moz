@@ -42,6 +42,7 @@ async function handleLogin(e){
     authToken = data.token;
     try{ localStorage.setItem('contafacil_token', authToken); }catch(e){ /* ignore storage errors */ }
     aplicarUsuarioLogado(data.usuario);
+    await carregarPlanosDoServidor();
     if(data.usuario.papel==='super_admin' || data.usuario.papel==='visualizador'){
       await enterAdminPanel();
     } else {
@@ -87,6 +88,7 @@ async function restoreSession(){
     const data = await apiFetch('/auth/me');
     if(data){
       aplicarUsuarioLogado(data);
+      await carregarPlanosDoServidor();
       if(data.papel==='super_admin' || data.papel==='visualizador'){
         await enterAdminPanel();
       } else {

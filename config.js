@@ -145,16 +145,27 @@ function formatPlanPrice(valor){
   return `${value.toLocaleString('pt-MZ', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} MT`;
 }
 
+async function carregarPlanosDoServidor(){
+  try {
+    const remote = await apiFetch('/planos/public');
+    if (Array.isArray(remote) && remote.length) {
+      const planos = ordenarPlanos(remote.map(normalizePlano));
+      savePlanos(planos);
+      return planos;
+    }
+  } catch (err) {
+    console.warn('Não foi possível carregar os planos do backend. Usando cache local.', err);
+  }
+
+  const fallback = getPlanos();
+  state.planos = fallback;
+  return fallback;
+}
+
 async function renderPlanosLanding(){
   const container = document.getElementById('planos-grid');
   if(!container) return;
-  let planos = state.planos && state.planos.length ? state.planos : getPlanos();
-  // Tentar obter planos públicos do backend; fallback para localStorage
-  try{
-    const remote = await apiFetch('/planos/public');
-    if(Array.isArray(remote) && remote.length) planos = remote.map(normalizePlano);
-  }catch(e){ /* ignore - usar local */ }
-
+  const planos = await carregarPlanosDoServidor();
   const planosOrdenados = ordenarPlanos(planos);
 
   container.innerHTML = planosOrdenados.map((plano)=>`
