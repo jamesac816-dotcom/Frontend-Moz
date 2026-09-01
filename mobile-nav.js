@@ -19,7 +19,7 @@ class MobileNavManager {
 
   init() {
     this.setupEventListeners();
-    this.createBottomNav();
+    this.syncVisibility();
     this.updateViewMode();
     window.addEventListener('resize', () => this.handleResize());
     window.addEventListener('orientationchange', () => this.handleOrientationChange());
@@ -62,32 +62,61 @@ class MobileNavManager {
   /**
    * Criar bottom navigation para mobile
    */
-  createBottomNav() {
-    if (this.isMobileView && !document.querySelector('.bottom-nav')) {
-      const bottomNav = document.createElement('div');
-      bottomNav.className = 'bottom-nav';
-      bottomNav.innerHTML = `
-        <div class="bottom-nav-inner">
-          <a class="bottom-nav-item active" data-view="dashboard" onclick="MobileNav.switchView('dashboard')">
-            <i class="fa-solid fa-gauge-high"></i>
-            <span>Dashboard</span>
-          </a>
-          <a class="bottom-nav-item" data-view="vendas" onclick="MobileNav.switchView('vendas')">
-            <i class="fa-solid fa-cash-register"></i>
-            <span>Vendas</span>
-          </a>
-          <a class="bottom-nav-item" data-view="caixa" onclick="MobileNav.switchView('caixa')">
-            <i class="fa-solid fa-vault"></i>
-            <span>Caixa</span>
-          </a>
-          <a class="bottom-nav-item" data-view="menu" onclick="MobileNav.toggleDrawer()">
-            <i class="fa-solid fa-bars"></i>
-            <span>Menu</span>
-          </a>
-        </div>
-      `;
-      document.body.appendChild(bottomNav);
+  isAppSessionActive() {
+    const appScreen = document.getElementById('screen-app');
+    const adminScreen = document.getElementById('screen-admin');
+    const appActive = !!appScreen && appScreen.classList.contains('active');
+    const adminActive = !!adminScreen && adminScreen.classList.contains('active');
+
+    return !!(state && state.user) && appActive && !adminActive;
+  }
+
+  syncVisibility() {
+    const appActive = this.isAppSessionActive();
+    const bottomNav = document.querySelector('.bottom-nav');
+
+    if (!appActive) {
+      if (bottomNav) bottomNav.remove();
+      return;
     }
+
+    if (this.isMobileView && !bottomNav) {
+      this.createBottomNav();
+    }
+
+    if (!this.isMobileView && bottomNav) {
+      bottomNav.remove();
+    }
+  }
+
+  createBottomNav() {
+    if (!this.isAppSessionActive() || !this.isMobileView || document.querySelector('.bottom-nav')) {
+      return;
+    }
+
+    const bottomNav = document.createElement('div');
+    bottomNav.className = 'bottom-nav';
+    bottomNav.innerHTML = `
+      <div class="bottom-nav-inner">
+        <a class="bottom-nav-item active" data-view="dashboard" onclick="MobileNav.switchView('dashboard')">
+          <i class="fa-solid fa-gauge-high"></i>
+          <span>Dashboard</span>
+        </a>
+        <a class="bottom-nav-item" data-view="vendas" onclick="MobileNav.switchView('vendas')">
+          <i class="fa-solid fa-cash-register"></i>
+          <span>Vendas</span>
+        </a>
+        <a class="bottom-nav-item" data-view="caixa" onclick="MobileNav.switchView('caixa')">
+          <i class="fa-solid fa-vault"></i>
+          <span>Caixa</span>
+        </a>
+        <a class="bottom-nav-item" data-view="menu" onclick="MobileNav.toggleDrawer()">
+          <i class="fa-solid fa-bars"></i>
+          <span>Menu</span>
+        </a>
+      </div>
+    `;
+    document.body.appendChild(bottomNav);
   }
 
   /**
@@ -183,23 +212,13 @@ class MobileNavManager {
     const newIsMobileView = window.innerWidth <= 768;
     const newIsTabletView = window.innerWidth > 768 && window.innerWidth <= 1024;
 
-    if (newIsMobileView !== this.isMobileView) {
-      this.isMobileView = newIsMobileView;
-      this.isTabletView = newIsTabletView;
+    this.isMobileView = newIsMobileView;
+    this.isTabletView = newIsTabletView;
 
-      if (this.isMobileView && !document.querySelector('.bottom-nav')) {
-        this.createBottomNav();
-      } else if (!this.isMobileView) {
-        const bottomNav = document.querySelector('.bottom-nav');
-        if (bottomNav) {
-          bottomNav.remove();
-        }
-      }
+    this.syncVisibility();
 
-      // Fechar drawer se aberto ao mudar para desktop
-      if (!this.isMobileView && this.drawerOpen) {
-        this.closeDrawer();
-      }
+    if (!this.isMobileView && this.drawerOpen) {
+      this.closeDrawer();
     }
 
     // Atualizar padding para safe areas
@@ -360,8 +379,20 @@ if (document.readyState === 'loading') {
  * Função global para toggle sidebar (compatível com HTML inline onclick)
  */
 function toggleSidebar(open) {
-  if (MobileNav) {
+  if (!MobileNav) return;
+
+  if (typeof MobileNav.toggleSidebar === 'function') {
     MobileNav.toggleSidebar(open);
+    return;
+  }
+
+  if (typeof MobileNav.constructor?.toggleSidebar === 'function') {
+    MobileNav.constructor.toggleSidebar(open);
+    return;
+  }
+
+  if (typeof MobileNav.toggleDrawer === 'function') {
+    MobileNav.toggleDrawer();
   }
 }
 

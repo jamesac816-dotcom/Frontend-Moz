@@ -251,6 +251,60 @@
     flex: 1;
     white-space: nowrap;
   }
+
+  .notif-wrap {
+    margin-left: auto;
+  }
+
+  .notif-panel {
+    position: fixed;
+    top: 72px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    max-height: min(72vh, 420px);
+    border-radius: 16px;
+    overflow-y: auto;
+    z-index: 400;
+  }
+
+  .notif-panel-body {
+    padding: 10px 8px 8px;
+  }
+
+  .notif-item {
+    margin: 6px 4px;
+  }
+
+  #screen-admin .main-area {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+
+  #screen-admin .sidebar {
+    left: -252px;
+    width: 252px;
+    z-index: 220;
+  }
+
+  #screen-admin .sidebar.open {
+    left: 0;
+  }
+
+  #screen-admin .topbar {
+    padding: 12px 14px;
+  }
+
+  #screen-admin .view-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #screen-admin .cards-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ========================================================

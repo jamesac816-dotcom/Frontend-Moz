@@ -75,6 +75,7 @@ function handleLogout(){
     currentPeriod:'mes'
   };
   try{ localStorage.removeItem('contafacil_token'); }catch(e){}
+  if (window.MobileNav) window.MobileNav.syncVisibility();
   showScreen('landing');
 }
 
@@ -109,6 +110,7 @@ if(document.readyState === 'loading'){
 
 async function enterApp(){
   updateSidebarUser();
+  if (window.MobileNav) window.MobileNav.syncVisibility();
   showScreen('app');
   try{
     // Dados de referência usados em vários ecrãs (listas pequenas, por isso

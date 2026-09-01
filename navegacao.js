@@ -80,6 +80,9 @@ async function handleOnboardingDetails(e){
 function showScreen(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
+  if (window.MobileNav) {
+    window.MobileNav.syncVisibility();
+  }
   window.scrollTo(0,0);
 }
 
