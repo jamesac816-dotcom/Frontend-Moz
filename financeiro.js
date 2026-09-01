@@ -58,6 +58,25 @@ async function popularSelectContaBancaria(selectId){
   }catch(err){ /* silencioso — o campo fica só com "Dinheiro/Caixa" */ }
 }
 
+async function carregarCategorias(tipo){
+  const query = tipo ? '?tipo=' + tipo : '?incluirInativas=1';
+  const categorias = await apiFetch('/categorias' + query);
+  if (Array.isArray(categorias) && categorias.length) return categorias;
+
+  const padrao = {
+    receita: ['Vendas', 'Serviços', 'Recebimento de Cliente', 'Outras Receitas'],
+    despesa: ['Fornecedores', 'Renda/Aluguer', 'Salários', 'Transporte', 'Energia/Água', 'Outras Despesas'],
+  };
+
+  return (padrao[tipo] || []).map((nome) => ({
+    id: `fallback-${tipo}-${nome}`,
+    nome,
+    tipo,
+    ativo: true,
+    cor: tipo === 'receita' ? '#10B981' : '#2563EB'
+  }));
+}
+
 async function openReceitaModal(){
   document.querySelector('#modal-receita form').reset();
   try{

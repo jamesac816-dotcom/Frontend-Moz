@@ -1537,9 +1537,9 @@ body.dark-mode .pdv-product-card, body.dark-mode .biztype-card{ background:#1628
                 <div class="field-plain">
                   <select id="pdv-cliente"><option value="">Cliente não identificado</option></select>
                 </div>
-                <div style="display:flex;gap:12px;align-items:center;margin-top:8px;">
+                <div style="display:flex;gap:12px;align-items:center;margin-top:8px;flex-wrap:wrap;">
                   <div class="sr-sub" id="pdv-cliente-saldo">Saldo: 0,00 MT</div>
-                  <label style="font-size:13px;display:flex;align-items:center;gap:8px;"><input type="checkbox" id="pdv-use-saldo"> Usar saldo do cliente</label>
+                  <label id="pdv-use-saldo-label" style="font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="pdv-use-saldo"> Fazer dívida / pagar depois</label>
                 </div>
                 <div class="sr-sub" style="margin-top:6px;">Pode deixar em branco para vendas avulsas, clientes fiéis ou empresas que pagam por depósito.</div>
               </div>

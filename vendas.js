@@ -73,25 +73,35 @@ function renderPdvCart(){
   if (clienteSel.dataset.selectedId) {
     clienteSel.value = clienteSel.dataset.selectedId;
   }
-  // atualizar display do saldo do cliente e estado do checkbox "usar saldo"
+  // atualizar display do saldo do cliente e estado do checkbox
   const saldoEl = document.getElementById('pdv-cliente-saldo');
   const useCheckbox = document.getElementById('pdv-use-saldo');
+  const useLabel = document.getElementById('pdv-use-saldo-label');
   const clienteId = clienteSel.value || null;
-  const cliente = clienteId? state.clients.find(c=>c.id===clienteId) : null;
+  const cliente = clienteId ? state.clients.find(c => c.id === clienteId) : null;
   const dinheiroBtn = document.querySelector('.pay-method[data-metodo="Dinheiro"]');
-  if(cliente){
+  const clienteTemCredito = !!(cliente && cliente.saldoDevedor < 0);
+
+  if (cliente) {
     saldoEl.textContent = `Saldo: ${formatMZN(cliente.saldoDevedor)}`;
-    if(cliente.saldoDevedor < 0){
-      useCheckbox.disabled = false;
-    } else {
-      useCheckbox.checked = false;
-      useCheckbox.disabled = true;
+    useCheckbox.disabled = false;
+    useCheckbox.checked = false;
+    if (useLabel) {
+      useLabel.innerHTML = clienteTemCredito
+        ? '<input type="checkbox" id="pdv-use-saldo"> Usar saldo do cliente'
+        : '<input type="checkbox" id="pdv-use-saldo"> Fazer dívida / pagar depois';
     }
   } else {
-    saldoEl.textContent = 'Saldo: 0,00 MT'; useCheckbox.checked = false; useCheckbox.disabled = true;
+    saldoEl.textContent = 'Saldo: 0,00 MT';
+    useCheckbox.checked = false;
+    useCheckbox.disabled = true;
+    if (useLabel) {
+      useLabel.innerHTML = '<input type="checkbox" id="pdv-use-saldo"> Fazer dívida / pagar depois';
+    }
   }
 
-  if (useCheckbox.checked && cliente && cliente.saldoDevedor < 0) {
+  // Só se o cliente tiver crédito real é que o saldo pode ser usado.
+  if (useCheckbox.checked && clienteTemCredito) {
     pdvPayMethod = 'Saldo do Cliente';
     if (dinheiroBtn) {
       dinheiroBtn.innerHTML = '<i class="fa-solid fa-wallet"></i><br>Saldo do Cliente';
@@ -122,16 +132,40 @@ function renderPdvCart(){
   }
 
   useCheckbox.onchange = () => {
-    if (useCheckbox.checked && cliente && cliente.saldoDevedor < 0) {
-      pdvPayMethod = 'Saldo do Cliente';
-    } else {
+    if (!cliente) {
       useCheckbox.checked = false;
       pdvPayMethod = 'Dinheiro';
+      renderPdvCart();
+      return;
     }
+
+    if (useCheckbox.checked && clienteTemCredito) {
+      pdvPayMethod = 'Saldo do Cliente';
+      renderPdvCart();
+      return;
+    }
+
+    if (useCheckbox.checked && !clienteTemCredito) {
+      const confirmar = window.confirm(`Cliente "${cliente.nome}" não tem saldo disponível.\n\nVai fazer dívida nesta venda?`);
+      if (!confirmar) {
+        useCheckbox.checked = false;
+        pdvPayMethod = 'Dinheiro';
+        renderPdvCart();
+        return;
+      }
+      pdvPayMethod = 'Dinheiro';
+      renderPdvCart();
+      return;
+    }
+
+    pdvPayMethod = 'Dinheiro';
     renderPdvCart();
   };
 
-  clienteSel.onchange = ()=>{ clienteSel.dataset.selectedId = clienteSel.value; renderPdvCart(); };
+  clienteSel.onchange = () => {
+    clienteSel.dataset.selectedId = clienteSel.value;
+    renderPdvCart();
+  };
 }
 
 function selectPayMethod(el){
@@ -160,27 +194,26 @@ async function carregarPagamentosEstado(){
 async function finalizarVenda(){
   if(!pdvCart.length){ alert('Adicione pelo menos um produto ao carrinho.'); return; }
   const clienteId = document.getElementById('pdv-cliente').value || null;
-  const cliente = clienteId? state.clients.find(c=>c.id===clienteId) : null;
+  const cliente = clienteId ? state.clients.find(c => c.id === clienteId) : null;
   const total = pdvCart.reduce((s,i)=>{ const p = state.products.find(x=>x.id===i.productId); return s + p.precoVendaUnidade*i.qtd; },0);
+  const useSaldoCheckbox = document.getElementById('pdv-use-saldo');
+  const usarSaldoCliente = !!(cliente && useSaldoCheckbox && useSaldoCheckbox.checked && cliente.saldoDevedor < 0);
+  const fazerDivida = !!(cliente && useSaldoCheckbox && useSaldoCheckbox.checked && cliente.saldoDevedor >= 0);
 
   // aplicar saldo do cliente se pedido (saldoDevedor negativo significa crédito)
   let appliedFromBalance = 0;
-  const useSaldo = cliente && document.getElementById('pdv-use-saldo') && document.getElementById('pdv-use-saldo').checked;
-  if(useSaldo && cliente && cliente.saldoDevedor < 0){
+  if(usarSaldoCliente){
     const credit = -cliente.saldoDevedor;
     appliedFromBalance = Math.min(credit, total);
   }
 
-  if(cliente && cliente.saldoDevedor >= 0){
-    const saldoTexto = formatMZN(cliente.saldoDevedor);
-    const confirmarDivida = window.confirm(
-      `Cliente "${cliente.nome}" não tem saldo disponível.\n\nSaldo actual: ${saldoTexto}\n\nVai fazer dívida nesta venda?`
-    );
-    if (!confirmarDivida) return;
+  // Se o cliente não tiver saldo, a dívida só acontece quando o utilizador marca explicitamente a opção.
+  if(cliente && !usarSaldoCliente && !fazerDivida && cliente.saldoDevedor >= 0){
+    // venda normal em dinheiro ou eletrónico
   }
 
-  // Validação de limite de crédito (novo)
-  if(cliente && cliente.saldoDevedor >= 0){
+  // Validação de limite de crédito quando a dívida for usada
+  if(cliente && fazerDivida){
     const limitePadrao = 5000; // MT — ajustar conforme política da empresa
     const limiteCliente = cliente.limiteCredito || limitePadrao;
     if(cliente.saldoDevedor + total > limiteCliente){
@@ -195,9 +228,11 @@ async function finalizarVenda(){
   // Nota: pagamentos eletrónicos são registados manualmente por enquanto (sem integração automática)
 
   const payload = {
-    clienteId, formaPagamento: pdvPayMethod,
-    itens: pdvCart.map(i=>({ produtoId: i.productId, quantidade: i.qtd })),
-    appliedBalance: appliedFromBalance
+    clienteId,
+    formaPagamento: pdvPayMethod,
+    itens: pdvCart.map(i => ({ produtoId: i.productId, quantidade: i.qtd })),
+    appliedBalance: appliedFromBalance,
+    fazerDivida
   };
   console.log('PDV: enviar payload de venda', payload);
 
