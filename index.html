@@ -2,8 +2,21 @@
 <html lang="pt-MZ">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#10B981">
+<meta name="description" content="Gestão simples e profissional para o seu negócio.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ContaFácil">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="msapplication-TileColor" content="#10B981">
+<meta name="msapplication-config" content="/browserconfig.xml">
 <title>ContaFácil MZ — Gestão financeira para o seu negócio</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/ios/32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/ios/16.png">
+<link rel="apple-touch-icon" href="/icons/ios/192.png">
+<link rel="stylesheet" href="responsive-mobile.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -833,6 +846,215 @@ body.dark-mode .pdv-product-card, body.dark-mode .biztype-card{ background:#1628
   .hero-cta-row{flex-direction:column;align-items:stretch;}
   .hero-cta-row > *{width:100%;}
   .stats-strip{grid-template-columns:1fr;}
+}
+</style>
+
+<!-- PWA Styles -->
+<style>
+/* PWA Offline Mode Styles */
+html.offline-mode { opacity: 0.95; }
+body.offline-mode::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    #DC2626,
+    #DC2626 10px,
+    #FCA5A5 10px,
+    #FCA5A5 20px
+  );
+  z-index: 9999;
+  animation: pulse-offline 2s infinite;
+}
+
+@keyframes pulse-offline {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* PWA Update Notification */
+.pwa-update-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  max-width: 380px;
+  background: #FFFFFF;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.18);
+  border: 1px solid #E2E8F0;
+  z-index: 9998;
+  animation: slide-up 0.3s ease;
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.pwa-update-notification.fade-out {
+  animation: slide-down 0.3s ease forwards;
+}
+
+@keyframes slide-down {
+  to {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  position: relative;
+}
+
+.notification-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.notification-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #0F172A;
+  margin: 0;
+}
+
+.notification-message {
+  font-size: 13px;
+  color: #475569;
+  margin: 4px 0 0;
+}
+
+.notification-button {
+  padding: 8px 16px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.notification-button:hover {
+  background: var(--primary-strong);
+}
+
+.notification-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #94A3B8;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.notification-close:hover {
+  background: #F1F5F9;
+  color: #475569;
+}
+
+/* Connectivity Indicator */
+.pwa-connectivity-indicator {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  background: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FECACA;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 9997;
+  animation: slide-down-in 0.3s ease;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+}
+
+.pwa-connectivity-indicator.online {
+  background: #DCFCE7;
+  color: #166534;
+  border-color: #86EFAC;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.pwa-connectivity-indicator.fade-out {
+  animation: slide-up-out 0.3s ease forwards;
+}
+
+@keyframes slide-down-in {
+  from {
+    transform: translateX(-50%) translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up-out {
+  to {
+    transform: translateX(-50%) translateY(-10px);
+    opacity: 0;
+  }
+}
+
+/* PWA Standalone Mode Adjustments */
+@supports (padding: max(0px)) {
+  body.pwa-standalone {
+    padding-top: max(0px, env(safe-area-inset-top));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+/* Mobile-First CSS overrides para PWA */
+@media (max-width: 480px) {
+  .pwa-update-notification {
+    bottom: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+
+  .pwa-connectivity-indicator {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    transform: none;
+  }
 }
 </style>
 </head>
@@ -3016,5 +3238,19 @@ body.dark-mode .pdv-product-card, body.dark-mode .biztype-card{ background:#1628
 <script src="perfil-config.js"></script>
 <script src="empresarial.js"></script>
 <script src="init.js"></script>
+
+<!-- Mobile Navigation Script -->
+<script src="mobile-nav.js"></script>
+
+<!-- PWA Initialization Script -->
+<script src="pwa-init.js"></script>
+
+<!-- Fallback for browsers that don't support Service Workers -->
+<script>
+  if (!('serviceWorker' in navigator)) {
+    console.warn('Este navegador não suporta Service Workers. PWA offline mode não está disponível.');
+  }
+</script>
+
 </body>
 </html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ContaFácil MZ — Sem Conexão</title>
+  <style>
+    :root {
+      --primary: #10B981;
+      --primary-strong: #059669;
+      --secondary: #0B1F33;
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --ink: #0F172A;
+      --muted: #475569;
+      --radius-md: 16px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .offline-container {
+      background: var(--card);
+      border-radius: var(--radius-md);
+      padding: 40px 30px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    }
+
+    .offline-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      background: #FEE2E2;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+    }
+
+    h1 {
+      font-family: 'Manrope', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--ink);
+    }
+
+    p {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+
+    .status {
+      background: #FEF3C7;
+      border: 1px solid #FCD34D;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      color: #92400E;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status::before {
+      content: "⚠️";
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+    }
+
+    button:hover {
+      background: var(--primary-strong);
+    }
+
+    .tips {
+      margin-top: 30px;
+      padding-top: 30px;
+      border-top: 1px solid #E2E8F0;
+    }
+
+    .tips h3 {
+      font-family: 'Manrope', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--ink);
+    }
+
+    .tips ul {
+      list-style: none;
+      font-size: 13px;
+      color: var(--muted);
+      text-align: left;
+    }
+
+    .tips li {
+      margin-bottom: 8px;
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .tips li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    @media (max-width: 480px) {
+      .offline-container {
+        padding: 30px 20px;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      p {
+        font-size: 14px;
+      }
+    }
+
+    /* Animação de pulse para indicador de conexão */
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .connection-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 20px;
+      padding: 10px;
+      background: #F1F5F9;
+      border-radius: 8px;
+    }
+
+    .connection-indicator::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      background: #DC2626;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .connection-indicator.connected::before {
+      background: #10B981;
+      animation: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-container">
+    <div class="offline-icon">📡</div>
+    <h1>Sem Conexão</h1>
+    <p>Parece que perdeu a conexão com a internet. Verifique a sua ligação e tente novamente.</p>
+
+    <div class="status">
+      Aguardando conexão...
+    </div>
+
+    <button onclick="location.reload()">Tentar Novamente</button>
+
+    <div class="tips">
+      <h3>Dicas:</h3>
+      <ul>
+        <li>Verifique se a WiFi ou dados móveis estão ativados</li>
+        <li>Tente aproximar-se do router WiFi</li>
+        <li>Reinicie a sua ligação à internet</li>
+        <li>Recarregue a página quando tiver conexão</li>
+      </ul>
+    </div>
+
+    <div class="connection-indicator" id="connectionStatus">
+      Offline
+    </div>
+  </div>
+
+  <script>
+    // Detectar mudanças de conexão
+    function updateConnectionStatus() {
+      const indicator = document.getElementById('connectionStatus');
+      const status = navigator.onLine;
+
+      if (status) {
+        indicator.textContent = 'Conexão restaurada';
+        indicator.classList.add('connected');
+        // Recarregar após 2 segundos de conexão restaurada
+        setTimeout(() => {
+          location.reload();
+        }, 2000);
+      } else {
+        indicator.textContent = 'Aguardando conexão...';
+        indicator.classList.remove('connected');
+      }
+    }
+
+    // Listeners para mudanças de conexão
+    window.addEventListener('online', updateConnectionStatus);
+    window.addEventListener('offline', updateConnectionStatus);
+
+    // Verificar status inicial
+    updateConnectionStatus();
+  </script>
+</body>
+</html>
