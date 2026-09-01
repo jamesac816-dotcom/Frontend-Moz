@@ -85,7 +85,6 @@ function renderPdvCart(){
   if (cliente) {
     saldoEl.textContent = `Saldo: ${formatMZN(cliente.saldoDevedor)}`;
     useCheckbox.disabled = false;
-    useCheckbox.checked = false;
     if (useLabel) {
       useLabel.innerHTML = clienteTemCredito
         ? '<input type="checkbox" id="pdv-use-saldo"> Usar saldo do cliente'
@@ -100,20 +99,32 @@ function renderPdvCart(){
     }
   }
 
-  // Só se o cliente tiver crédito real é que o saldo pode ser usado.
-  if (useCheckbox.checked && clienteTemCredito) {
+  const escolhaSaldoOuDivida = !!(useCheckbox && useCheckbox.checked);
+
+  if (escolhaSaldoOuDivida) {
     pdvPayMethod = 'Saldo do Cliente';
     if (dinheiroBtn) {
       dinheiroBtn.innerHTML = '<i class="fa-solid fa-wallet"></i><br>Saldo do Cliente';
       dinheiroBtn.classList.add('selected');
-      dinheiroBtn.style.opacity = '1';
+      dinheiroBtn.style.opacity = '0.45';
       dinheiroBtn.style.pointerEvents = 'none';
+      dinheiroBtn.setAttribute('aria-disabled', 'true');
+      dinheiroBtn.setAttribute('data-disabled', 'true');
+      dinheiroBtn.title = 'Desativado porque está a usar saldo/debito do cliente';
     }
     document.querySelectorAll('.pay-method').forEach(m => {
-      if (m !== dinheiroBtn) {
-        m.classList.remove('selected');
+      if (m === dinheiroBtn) {
         m.style.opacity = '0.45';
         m.style.pointerEvents = 'none';
+        m.classList.add('selected');
+        m.setAttribute('aria-disabled', 'true');
+        m.setAttribute('data-disabled', 'true');
+      } else {
+        m.style.opacity = '1';
+        m.style.pointerEvents = '';
+        m.classList.remove('selected');
+        m.removeAttribute('aria-disabled');
+        m.removeAttribute('data-disabled');
       }
     });
   } else {
@@ -121,10 +132,15 @@ function renderPdvCart(){
       dinheiroBtn.innerHTML = '<i class="fa-solid fa-money-bill-wave"></i><br>Dinheiro';
       dinheiroBtn.style.opacity = '1';
       dinheiroBtn.style.pointerEvents = '';
+      dinheiroBtn.removeAttribute('aria-disabled');
+      dinheiroBtn.removeAttribute('data-disabled');
+      dinheiroBtn.title = '';
     }
     document.querySelectorAll('.pay-method').forEach(m => {
       m.style.opacity = '1';
       m.style.pointerEvents = '';
+      m.removeAttribute('aria-disabled');
+      m.removeAttribute('data-disabled');
       if (m.dataset.metodo === pdvPayMethod) m.classList.add('selected');
       else m.classList.remove('selected');
     });
@@ -139,21 +155,17 @@ function renderPdvCart(){
       return;
     }
 
-    if (useCheckbox.checked && clienteTemCredito) {
-      pdvPayMethod = 'Saldo do Cliente';
-      renderPdvCart();
-      return;
-    }
-
-    if (useCheckbox.checked && !clienteTemCredito) {
-      const confirmar = window.confirm(`Cliente "${cliente.nome}" não tem saldo disponível.\n\nVai fazer dívida nesta venda?`);
-      if (!confirmar) {
-        useCheckbox.checked = false;
-        pdvPayMethod = 'Dinheiro';
-        renderPdvCart();
-        return;
+    if (useCheckbox.checked) {
+      if (!clienteTemCredito) {
+        const confirmar = window.confirm(`Cliente "${cliente.nome}" não tem saldo disponível.\n\nVai fazer dívida nesta venda?`);
+        if (!confirmar) {
+          useCheckbox.checked = false;
+          pdvPayMethod = 'Dinheiro';
+          renderPdvCart();
+          return;
+        }
       }
-      pdvPayMethod = 'Dinheiro';
+      pdvPayMethod = 'Saldo do Cliente';
       renderPdvCart();
       return;
     }
@@ -170,11 +182,11 @@ function renderPdvCart(){
 
 function selectPayMethod(el){
   const useSaldo = document.getElementById('pdv-use-saldo') && document.getElementById('pdv-use-saldo').checked;
-  if (useSaldo && el.dataset.metodo !== 'Dinheiro') {
+  if (useSaldo) {
+    if (el.dataset.metodo === 'Dinheiro') {
+      return;
+    }
     pdvPayMethod = 'Saldo do Cliente';
-    return;
-  }
-  if (useSaldo && el.dataset.metodo === 'Dinheiro') {
     return;
   }
 
@@ -200,6 +212,10 @@ async function finalizarVenda(){
   const usarSaldoCliente = !!(cliente && useSaldoCheckbox && useSaldoCheckbox.checked && cliente.saldoDevedor < 0);
   const fazerDivida = !!(cliente && useSaldoCheckbox && useSaldoCheckbox.checked && cliente.saldoDevedor >= 0);
 
+  if (useSaldoCheckbox && useSaldoCheckbox.checked) {
+    pdvPayMethod = 'Saldo do Cliente';
+  }
+
   // aplicar saldo do cliente se pedido (saldoDevedor negativo significa crédito)
   let appliedFromBalance = 0;
   if(usarSaldoCliente){
@@ -224,12 +240,14 @@ async function finalizarVenda(){
 
   const btn = document.getElementById('pdv-finalizar-btn');
   const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="pdv-loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Finalizando...</span>';
 
   // Nota: pagamentos eletrónicos são registados manualmente por enquanto (sem integração automática)
 
   const payload = {
     clienteId,
-    formaPagamento: pdvPayMethod,
+    formaPagamento: (useSaldoCheckbox && useSaldoCheckbox.checked) ? 'Saldo do Cliente' : pdvPayMethod,
     itens: pdvCart.map(i => ({ produtoId: i.productId, quantidade: i.qtd })),
     appliedBalance: appliedFromBalance,
     fazerDivida
@@ -266,6 +284,36 @@ async function finalizarVenda(){
   }finally{
     btn.disabled = false; btn.innerHTML = original;
   }
+}
+
+function imprimirRecibo(){
+  const conteudo = document.getElementById('recibo-conteudo');
+  if (!conteudo || !conteudo.innerHTML.trim()) return;
+
+  const janela = window.open('', '_blank', 'width=420,height=800');
+  if (!janela) {
+    alert('O navegador bloqueou a janela de impressão. Permita pop-ups para imprimir o recibo.');
+    return;
+  }
+
+  janela.document.write(`
+    <html>
+      <head>
+        <title>Recibo</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; color: #0f172a; }
+          .r-line { display: flex; justify-content: space-between; gap: 12px; margin: 6px 0; font-size: 12px; }
+          hr { border: none; border-top: 1px solid #e2e8f0; margin: 8px 0; }
+          .small { font-size: 11px; color: #64748b; }
+          b { font-size: 13px; }
+        </style>
+      </head>
+      <body>${conteudo.innerHTML}</body>
+    </html>
+  `);
+  janela.document.close();
+  janela.focus();
+  setTimeout(() => janela.print(), 250);
 }
 
 function mostrarRecibo(venda){

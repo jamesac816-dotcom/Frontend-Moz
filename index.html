@@ -183,6 +183,10 @@ img{max-width:100%; display:block;}
 .btn:disabled,
 .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none;}
 
+.pdv-loading-state{display:inline-flex;align-items:center;justify-content:center;gap:8px;}
+.pdv-loading-state .fa-spinner{animation:spin 0.9s linear infinite;}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+
 .landing-hero{
   max-width:1240px;margin:0 auto;padding:8vh 6vw 10vh;
   display:grid;grid-template-columns:1.1fr .9fr;gap:60px;align-items:center;
@@ -2715,7 +2719,10 @@ body.dark-mode .pdv-product-card, body.dark-mode .biztype-card{ background:#1628
     <div class="modal-body">
       <div class="recibo-box" id="recibo-conteudo"></div>
     </div>
-    <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal('modal-recibo')">Fechar</button></div>
+    <div class="modal-foot" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-outline" type="button" onclick="closeModal('modal-recibo')">Fechar</button>
+      <button class="btn btn-primary" type="button" onclick="imprimirRecibo()"><i class="fa-solid fa-print"></i> Imprimir</button>
+    </div>
   </div>
 </div>
 
