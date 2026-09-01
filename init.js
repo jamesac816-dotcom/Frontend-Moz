@@ -12,6 +12,10 @@ document.addEventListener('click', function(e){
   const notifWrap = document.querySelector('.notif-wrap');
   if(notifPanel && notifPanel.classList.contains('open') && notifWrap && !notifWrap.contains(e.target)){
     notifPanel.classList.remove('open');
+    notifPanel.style.display = 'block';
+    notifPanel.style.visibility = 'hidden';
+    notifPanel.style.opacity = '0';
+    notifPanel.style.pointerEvents = 'none';
   }
 });
 

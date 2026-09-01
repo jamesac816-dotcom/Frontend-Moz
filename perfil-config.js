@@ -22,27 +22,41 @@ function computeNotifications(){
 }
 function toggleNotifPanel(){
   const panel = document.getElementById('notif-panel');
-  if (!panel) return;
+  if (!panel || !state.user) return;
+
+  const adminActive = document.getElementById('screen-admin') && document.getElementById('screen-admin').classList.contains('active');
+  if (adminActive) return;
 
   const opening = !panel.classList.contains('open');
   panel.classList.toggle('open', opening);
+  panel.style.display = opening ? 'block' : 'none';
 
   if (opening) {
-    if (typeof gerarNotificacoesSistema === 'function') gerarNotificacoesSistema();
-    else renderNotifPanel();
+    if (typeof gerarNotificacoesSistema === 'function') {
+      gerarNotificacoesSistema();
+    } else {
+      renderNotifPanel();
+    }
   }
 }
 function renderNotifPanel(){
+  const products = Array.isArray(state.products) ? state.products : [];
+  const clients = Array.isArray(state.clients) ? state.clients : [];
   const notifs = computeNotifications();
   const body = document.getElementById('notif-panel-body');
-  body.innerHTML = notifs.length? notifs.map(n=>`
+  if (!body) return;
+
+  body.innerHTML = notifs.length ? notifs.map(n => `
     <div class="notif-item"><i class="fa-solid ${n.icon}" style="color:${n.color};"></i>
       <div><div class="ni-title">${n.titulo}</div><div class="ni-sub">${n.sub}</div></div>
     </div>`).join('') : '<div class="notif-empty">Sem notificações por agora.</div>';
+
   const countEl = document.getElementById('notif-count');
-  const alertCount = state.products.filter(p=>stockInfo(p).isLow).length + state.clients.filter(c=>c.saldoDevedor>0).length;
-  countEl.style.display = alertCount? 'inline-block':'none';
-  countEl.textContent = alertCount;
+  const alertCount = products.filter(p => stockInfo(p).isLow).length + clients.filter(c => Number(c.saldoDevedor || 0) > 0).length;
+  if (countEl) {
+    countEl.style.display = alertCount ? 'inline-block' : 'none';
+    countEl.textContent = alertCount;
+  }
 }
 
 /* =========================================================

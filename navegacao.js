@@ -10,10 +10,13 @@ function startOnboarding(){
   document.querySelectorAll('.biztype-card').forEach(c=>c.classList.remove('selected'));
   document.getElementById('ob-continue-btn').disabled = true;
   document.getElementById('ob-logo-preview').innerHTML = '<i class="fa-solid fa-image"></i>';
-  document.getElementById('ob-business-name').value = '';
+  const businessNameSummary = document.getElementById('ob-business-name-summary');
+  if (businessNameSummary) {
+    businessNameSummary.textContent = pendingRegisterData?.nomeNegocio || 'Não definido';
+  }
   document.getElementById('ob-city').value = '';
   document.getElementById('ob-address').value = '';
-  document.getElementById('ob-phone').value = pendingRegisterData.telefone || '';
+  document.getElementById('ob-phone').value = pendingRegisterData?.telefone || '';
   goToOnboardingStep(1);
   showScreen('onboarding');
 }
@@ -48,8 +51,8 @@ async function handleOnboardingDetails(e){
   e.preventDefault();
   const payload = {
     ...pendingRegisterData,
-    telefone: document.getElementById('ob-phone').value.trim() || pendingRegisterData.telefone,
-    nomeNegocio: document.getElementById('ob-business-name').value.trim(),
+    telefone: document.getElementById('ob-phone').value.trim() || pendingRegisterData?.telefone,
+    nomeNegocio: pendingRegisterData?.nomeNegocio || '',
     tipoNegocio: pendingBusinessType,
     cidade: document.getElementById('ob-city').value.trim(),
     endereco: document.getElementById('ob-address').value.trim()

@@ -169,15 +169,15 @@ async function gerarAlertaVendas() {
 }
 
 function exibirNotificacoes() {
-  const panel = document.getElementById('notif-panel-body');
-  if (!panel) return;
+  const body = document.getElementById('notif-panel-body');
+  if (!body) return;
 
   if (notificacoes.length === 0) {
-    panel.innerHTML = '<div style="padding:20px;text-align:center;color:var(--slate-400);font-size:13px;"><i class="fa-solid fa-bell-slash"></i><p>Tudo bem por agora!</p></div>';
+    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--slate-400);font-size:13px;"><i class="fa-solid fa-bell-slash"></i><p>Tudo bem por agora!</p></div>';
     return;
   }
 
-  panel.innerHTML = notificacoes.map(n => `
+  body.innerHTML = notificacoes.map(n => `
     <div class="notif-item" style="cursor:pointer;border-left:4px solid ${n.cor};" onclick="javascript:${n.acao ? n.acao.toString().replace(/^function.*?\{/, '').slice(0, -1) : ''}; closeNotifPanel()">
       <div style="display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-bottom:1px solid #EFF1F5;">
         <div style="color:${n.cor};font-size:16px;margin-top:2px;"><i class="fa-solid ${n.icone}"></i></div>
@@ -211,6 +211,10 @@ function toggleNotifPanel() {
 
   const opening = !panel.classList.contains('open');
   panel.classList.toggle('open', opening);
+  panel.style.display = 'block';
+  panel.style.visibility = opening ? 'visible' : 'hidden';
+  panel.style.opacity = opening ? '1' : '0';
+  panel.style.pointerEvents = opening ? 'auto' : 'none';
 
   if (opening) {
     gerarNotificacoesSistema();
@@ -219,7 +223,13 @@ function toggleNotifPanel() {
 
 function closeNotifPanel() {
   const panel = document.getElementById('notif-panel');
-  if (panel) panel.classList.remove('open');
+  if (panel) {
+    panel.classList.remove('open');
+    panel.style.display = 'block';
+    panel.style.visibility = 'hidden';
+    panel.style.opacity = '0';
+    panel.style.pointerEvents = 'none';
+  }
 }
 
 // Executar a cada 2 minutos para atualizar notificações

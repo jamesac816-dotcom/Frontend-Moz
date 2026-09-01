@@ -60,6 +60,7 @@ function handleRegister(e){
   e.preventDefault();
   pendingRegisterData = {
     nome: document.getElementById('reg-owner').value.trim(),
+    nomeNegocio: document.getElementById('reg-business').value.trim(),
     telefone: document.getElementById('reg-phone').value.trim(),
     email: document.getElementById('reg-email').value.trim(),
     senha: document.getElementById('reg-password').value
