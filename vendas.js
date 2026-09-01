@@ -95,7 +95,7 @@ function renderPdvCart(){
     useCheckbox.checked = false;
     useCheckbox.disabled = true;
     if (useLabel) {
-      useLabel.innerHTML = '<input type="checkbox" id="pdv-use-saldo"> Fazer dívida / pagar depois';
+      useLabel.innerHTML = '<input type="checkbox" id="pdv-use-saldo" disabled> Fazer dívida / pagar depois';
     }
   }
 
@@ -245,33 +245,42 @@ async function finalizarVenda(){
 
   // Nota: pagamentos eletrónicos são registados manualmente por enquanto (sem integração automática)
 
+  const formaPagamentoFinal = (!clienteId || !useSaldoCheckbox || !useSaldoCheckbox.checked)
+    ? (pdvPayMethod || 'Dinheiro')
+    : 'Saldo do Cliente';
+
   const payload = {
     clienteId,
-    formaPagamento: (useSaldoCheckbox && useSaldoCheckbox.checked) ? 'Saldo do Cliente' : pdvPayMethod,
+    formaPagamento: formaPagamentoFinal,
     itens: pdvCart.map(i => ({ produtoId: i.productId, quantidade: i.qtd })),
     appliedBalance: appliedFromBalance,
-    fazerDivida
+    fazerDivida: !!clienteId && !!(useSaldoCheckbox && useSaldoCheckbox.checked && !usarSaldoCliente)
   };
   console.log('PDV: enviar payload de venda', payload);
 
   try{
     const resultado = await apiFetch('/vendas', { method:'POST', body: JSON.stringify(payload) });
 
-    const itensParaRecibo = resultado.itens.map(it=>{
-      const p = state.products.find(x=>x.id===it.produtoId);
-      return { nome: p?p.nome:'Produto', qtd: it.quantidade, precoUnit: Number(it.precoUnitario), subtotal: Number(it.subtotal) };
-    });
+    const itensParaRecibo = Array.isArray(resultado?.itens)
+      ? resultado.itens.map(it=>{
+          const p = state.products.find(x=>x.id===it.produtoId);
+          return { nome: p?p.nome:'Produto', qtd: it.quantidade, precoUnit: Number(it.precoUnitario), subtotal: Number(it.subtotal) };
+        })
+      : [];
+
     const venda = {
-      numero: resultado.numero, data: resultado.data, hora: (resultado.hora||'').slice(0,5),
+      numero: resultado?.numero || 'REC-0000', data: resultado?.data || new Date().toISOString().slice(0,10), hora: (resultado?.hora||'').slice(0,5),
       clienteNome: cliente? cliente.nome : 'Cliente não identificado',
-      pagamento: resultado.forma_pagamento, itens: itensParaRecibo,
-      total: Number(resultado.total), lucro: Number(resultado.lucro)
+      pagamento: resultado?.forma_pagamento || formaPagamentoFinal, itens: itensParaRecibo,
+      total: Number(resultado?.total || total), lucro: Number(resultado?.lucro || 0)
     };
 
     mostrarRecibo(venda);
     pdvCart = [];
-    document.getElementById('pdv-mobile-phone').value = '';
-    document.getElementById('pdv-mobile-phone-field').style.display = 'none';
+    const phoneInput = document.getElementById('pdv-mobile-phone');
+    const phoneField = document.getElementById('pdv-mobile-phone-field');
+    if (phoneInput) phoneInput.value = '';
+    if (phoneField) phoneField.style.display = 'none';
     document.querySelectorAll('.pay-method').forEach(m=>m.classList.remove('selected'));
     document.querySelector('.pay-method[data-metodo="Dinheiro"]').classList.add('selected');
     pdvPayMethod = 'Dinheiro';
