@@ -204,7 +204,10 @@ function atualizarBadgeNotificacoes() {
 
 function toggleNotifPanel() {
   const panel = document.getElementById('notif-panel');
-  if (!panel) return;
+  if (!panel || !state.user) return;
+
+  const adminActive = document.getElementById('screen-admin') && document.getElementById('screen-admin').classList.contains('active');
+  if (adminActive) return;
 
   const opening = !panel.classList.contains('open');
   panel.classList.toggle('open', opening);
