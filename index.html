@@ -570,6 +570,16 @@ img{max-width:100%; display:block;}
 .view.active{display:block;}
 
 /* cards */
+.negocio-acoes{display:flex;flex-wrap:wrap;justify-content:center;align-items:stretch;gap:10px;margin-bottom:18px;}
+.negocio-acoes .btn{justify-content:center;white-space:normal;text-align:center;max-width:100%;}
+#dashboard-atalhos .btn{flex:1 1 180px;max-width:260px;}
+#dashboard-tipo{text-align:center;}
+#biztype-grid{display:flex;flex-wrap:wrap;justify-content:center;}
+#biztype-grid .biztype-card{flex:0 0 calc((100% - 42px)/4);min-width:0;justify-content:center;overflow-wrap:anywhere;}
+@media(max-width:768px){#biztype-grid .biztype-card{flex-basis:calc((100% - 28px)/3);}}
+@media(max-width:520px){#biztype-grid .biztype-card{flex-basis:calc((100% - 14px)/2);}#dashboard-atalhos .btn{max-width:none;}}
+.negocio-acoes[hidden], #produtos-sugestoes[hidden]{display:none;}
+#produtos-sugestoes p{margin:10px 0 16px;color:var(--slate-600);font-size:13px;}
 .cards-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:26px;}
 .stat-card{
   background:linear-gradient(180deg,#ffffff, #f9fbfd);border-radius:var(--radius-lg);padding:20px 18px;box-shadow:var(--shadow-sm);
@@ -1434,7 +1444,7 @@ body.offline-mode::before {
         <form onsubmit="handleRegister(event)">
           <div class="field">
             <label>Nome do negócio</label>
-            <div class="input-wrap"><i class="fa-solid fa-store field-icon"></i><input type="text" id="reg-business" placeholder="Ex: Mercearia Central" required></div>
+            <div class="input-wrap"><i class="fa-solid fa-store field-icon"></i><input type="text" id="reg-business" placeholder="Nome do seu negócio" required></div>
           </div>
           <div class="field">
             <label>Seu nome completo</label>
@@ -1482,7 +1492,7 @@ body.offline-mode::before {
     <!-- PASSO 1: tipo de negócio -->
     <div class="onboarding-panel active" id="ob-step-1">
       <h2>Qual tipo de negócio você possui?</h2>
-      <p class="ob-sub">Isto ajuda-nos a preparar o sistema com as categorias certas para si.</p>
+      <p class="ob-sub">Vamos adaptar as prioridades do Dashboard e os atalhos à sua actividade.</p>
       <div class="biztype-grid" id="biztype-grid">
         <button type="button" class="biztype-card" data-tipo="Empresa" onclick="selectBusinessType(this)"><i class="fa-solid fa-building"></i><span>Empresa</span></button>
         <button type="button" class="biztype-card" data-tipo="Loja" onclick="selectBusinessType(this)"><i class="fa-solid fa-shop"></i><span>Loja</span></button>
@@ -1633,9 +1643,9 @@ body.offline-mode::before {
         </div>
         <div class="topbar-right">
           <div class="period-filter" id="period-filter">
-            <button data-period="hoje" onclick="setPeriod('hoje')">Hoje</button>
+            <button data-period="hoje" class="active" onclick="setPeriod('hoje')">Hoje</button>
             <button data-period="semana" onclick="setPeriod('semana')">Semana</button>
-            <button data-period="mes" class="active" onclick="setPeriod('mes')">Mês</button>
+            <button data-period="mes" onclick="setPeriod('mes')">Mês</button>
             <button data-period="ano" onclick="setPeriod('ano')">Ano</button>
           </div>
           <div class="notif-wrap">
@@ -1653,7 +1663,9 @@ body.offline-mode::before {
 
       <!-- DASHBOARD -->
       <div class="view active" id="view-dashboard">
-        <div class="cards-grid">
+        <p id="dashboard-tipo" class="sr-sub" style="margin-bottom:12px;"></p>
+        <p id="dashboard-historico-aviso" class="sr-sub" hidden>Existem movimentos anteriores à actualização. O saldo registado pode incluir vendas ainda não recebidas; reveja o histórico antes de o usar como dinheiro disponível. O lucro de períodos com esses movimentos fica por confirmar.</p>
+        <div class="cards-grid" id="dashboard-principal">
           <div class="stat-card">
             <div class="sc-top"><div class="sc-icon navy"><i class="fa-solid fa-wallet"></i></div></div>
             <div class="sc-label">Saldo actual</div>
@@ -1676,6 +1688,11 @@ body.offline-mode::before {
           </div>
         </div>
 
+        <div id="dashboard-alertas" class="negocio-acoes" aria-label="Alertas do negócio" hidden></div>
+        <section class="panel" style="margin-bottom:24px;">
+          <div class="panel-head"><h3>O que deseja fazer?</h3><button type="button" class="btn btn-outline" onclick="showView('perfil')">Tipo de negócio</button></div>
+          <div class="panel-body negocio-acoes" id="dashboard-atalhos"></div>
+        </section>
         <div class="cards-grid" id="cards-grid-kpis">
           <div class="stat-card" data-modulo="vendas">
             <div class="sc-top"><div class="sc-icon green"><i class="fa-solid fa-cash-register"></i></div></div>
@@ -1735,6 +1752,7 @@ body.offline-mode::before {
 
       <!-- PRODUTOS -->
       <div class="view" id="view-produtos">
+        <section id="produtos-sugestoes" class="panel panel-body" style="margin-bottom:20px;" hidden></section>
         <div class="view-toolbar">
           <div class="input-wrap" style="max-width:280px;flex:1;">
             <i class="fa-solid fa-magnifying-glass field-icon"></i>
@@ -2327,7 +2345,7 @@ body.offline-mode::before {
                 <div class="field"><label>E-mail de login</label><div class="field-plain"><input type="email" id="perfil-email" required></div></div>
               </div>
               <div class="grid-2">
-                <div class="field"><label>Tipo de negócio</label><div class="field-plain"><input type="text" id="perfil-tipo" disabled style="background:#F1F5F9;color:var(--slate-600);"></div></div>
+                <div class="field"><label for="perfil-tipo">Tipo de negócio</label><div class="field-plain"><select id="perfil-tipo" required></select></div></div>
                 <div class="field"><label>Cidade</label><div class="field-plain"><input type="text" id="perfil-cidade"></div></div>
               </div>
               <div class="field"><label>Endereço</label><div class="field-plain"><input type="text" id="perfil-endereco"></div></div>
@@ -2728,11 +2746,13 @@ body.offline-mode::before {
           </label>
         </div>
         <div class="grid-2">
-          <div class="field"><label>Nome do produto</label><div class="field-plain"><input type="text" id="produto-nome" placeholder="Ex: Esparguete" required></div></div>
-          <div class="field"><label>Categoria</label><div class="field-plain"><input type="text" id="produto-categoria" placeholder="Ex: Massas" required></div></div>
+          <div class="field"><label for="produto-tipo">Tipo de artigo</label><div class="field-plain"><select id="produto-tipo" onchange="actualizarCamposArtigo()"><option value="produto">Produto com stock</option><option value="servico">Serviço sem stock</option></select></div></div>
+          <div class="field"><label for="produto-unidade">Unidade de medida</label><div class="field-plain"><select id="produto-unidade" onchange="actualizarCamposArtigo()"><option value="un">Unidade</option><option value="kg">Quilograma (kg)</option><option value="g">Grama (g)</option><option value="l">Litro (l)</option><option value="ml">Mililitro (ml)</option><option value="m">Metro (m)</option><option value="m2">Metro quadrado (m²)</option><option value="hora">Hora</option><option value="servico">Serviço</option></select></div></div>
+          <div class="field"><label>Nome do produto ou serviço</label><div class="field-plain"><input type="text" id="produto-nome" placeholder="Nome do produto" required></div></div>
+          <div class="field"><label>Categoria</label><div class="field-plain"><input type="text" id="produto-categoria" placeholder="Categoria do produto" required></div></div>
         </div>
         <div class="grid-2">
-          <div class="field"><label>Marca</label><div class="field-plain"><input type="text" id="produto-marca" placeholder="Ex: Milaneza"></div></div>
+          <div class="field"><label>Marca</label><div class="field-plain"><input type="text" id="produto-marca" placeholder="Marca ou fabricante"></div></div>
           <div class="field"><label>Fornecedor</label><div class="field-plain">
             <select id="produto-fornecedor">
               <option value="">Nenhum / a definir</option>
@@ -2750,11 +2770,11 @@ body.offline-mode::before {
         </div>
         <div class="grid-2">
           <div class="field"><label>Preço de venda — caixa (MT)</label><div class="field-plain"><input type="number" step="0.01" min="0" id="produto-preco-venda-caixa" placeholder="0,00" required></div></div>
-          <div class="field"><label>Quantidade por caixa</label><div class="field-plain"><input type="number" step="1" min="1" id="produto-qtd-caixa" placeholder="Ex: 20" required></div></div>
+          <div class="field"><label>Quantidade por embalagem (1 se vende avulso)</label><div class="field-plain"><input type="number" step="1" min="1" id="produto-qtd-caixa" value="1" required></div></div>
         </div>
         <div class="grid-2">
           <div class="field"><label>Quantidade em estoque (unidades)</label><div class="field-plain"><input type="number" step="1" min="0" id="produto-qtd-estoque" placeholder="0" required></div></div>
-          <div class="field"><label>Quantidade mínima (caixas)</label><div class="field-plain"><input type="number" step="1" min="0" id="produto-qtd-minima" placeholder="Ex: 10" required></div></div>
+          <div class="field"><label>Quantidade mínima (caixas)</label><div class="field-plain"><input type="number" step="0.001" min="0" id="produto-qtd-minima" placeholder="Ex: 10" required></div></div>
         </div>
         <div class="field"><label>Status</label><div class="field-plain">
           <select id="produto-status"><option value="Ativo">Ativo</option><option value="Inativo">Inativo</option></select>
@@ -2791,7 +2811,7 @@ body.offline-mode::before {
             </select>
           </div></div>
         </div>
-        <div class="field"><label>Quantidade</label><div class="field-plain"><input type="number" step="1" min="1" id="movimento-quantidade" placeholder="0" required></div></div>
+        <div class="field"><label>Quantidade</label><div class="field-plain"><input type="number" step="0.001" min="0.001" id="movimento-quantidade" placeholder="0" required></div></div>
         <div class="field"><label>Motivo</label><div class="field-plain"><input type="text" id="movimento-motivo" placeholder="Ex: Venda ao balcão, reposição, quebra..." required></div></div>
       </div>
       <div class="modal-foot">
@@ -2810,7 +2830,8 @@ body.offline-mode::before {
         <div class="field"><label>Nome do cliente</label><div class="field-plain"><input type="text" id="cliente-nome" placeholder="Nome completo" required></div></div>
         <div class="field"><label>Telefone</label><div class="field-plain"><input type="tel" id="cliente-telefone" placeholder="84 000 0000" required></div></div>
         <div class="field"><label>NIF (opcional)</label><div class="field-plain"><input type="text" id="cliente-nif" placeholder="Número de Identificação Fiscal"></div></div>
-        <div class="field"><label>Saldo devedor inicial (MT)</label><div class="field-plain"><input type="number" step="0.01" min="0" id="cliente-saldo" placeholder="0,00" value="0"></div></div>
+          <div class="field"><label>Saldo devedor inicial (MT)</label><div class="field-plain"><input type="number" step="0.01" min="0" id="cliente-saldo" placeholder="0,00" value="0"></div></div>
+          <div class="field"><label for="cliente-limite">Limite de crédito (MT, opcional)</label><div class="field-plain"><input type="number" step="0.01" min="0" id="cliente-limite" placeholder="Sem limite definido"></div></div>
       </div>
       <div class="modal-foot">
         <button type="button" class="btn btn-outline" style="color:var(--ink);border-color:var(--border);" onclick="closeModal('modal-cliente')">Cancelar</button>
@@ -2870,7 +2891,7 @@ body.offline-mode::before {
         </div>
         <div class="grid-2">
           <div class="field"><label>Cidade</label><div class="field-plain"><input type="text" id="fornecedor-cidade"></div></div>
-          <div class="field"><label>Produtos fornecidos</label><div class="field-plain"><input type="text" id="fornecedor-produtos" placeholder="Ex: Massas, Arroz"></div></div>
+          <div class="field"><label>Produtos fornecidos</label><div class="field-plain"><input type="text" id="fornecedor-produtos" placeholder="Produtos fornecidos ao seu negócio"></div></div>
         </div>
       </div>
       <div class="modal-foot">
@@ -2894,7 +2915,7 @@ body.offline-mode::before {
         </div></div>
         <div class="field" id="compra-contexto" style="font-size:13px;color:var(--slate-600);margin-top:-8px;"></div>
         <div class="grid-2">
-          <div class="field"><label>Quantidade (unidades)</label><div class="field-plain"><input type="number" step="1" min="1" id="compra-quantidade" required></div></div>
+          <div class="field"><label>Quantidade (unidades)</label><div class="field-plain"><input type="number" step="0.001" min="0.001" id="compra-quantidade" required></div></div>
           <div class="field"><label>Custo por unidade (MT)</label><div class="field-plain"><input type="number" step="0.01" min="0" id="compra-custo-unitario" required></div></div>
         </div>
         <div class="field"><label>Data</label><div class="field-plain"><input type="date" id="compra-data" required></div></div>
@@ -3261,31 +3282,32 @@ body.offline-mode::before {
 </script>
 
 <!-- Scripts da aplicação, divididos por módulo (ver pasta ) -->
-<script src="config.js"></script>
-<script src="auth.js"></script>
-<script src="admin.js"></script>
-<script src="navegacao.js"></script>
-<script src="notificacoes-sistema.js"></script>
-<script src="onboarding.js"></script>
-<script src="produtos-estoque.js"></script>
-<script src="clientes.js"></script>
-<script src="financeiro.js"></script>
-<script src="dashboard.js"></script>
-<script src="vendas.js"></script>
-<script src="fornecedores-compras.js"></script>
-<script src="funcionarios.js"></script>
-<script src="caixa.js"></script>
-<script src="financeiro-avancado.js"></script>
-<script src="relatorios.js"></script>
-<script src="perfil-config.js"></script>
-<script src="empresarial.js"></script>
-<script src="init.js"></script>
+<script src="config.js?v=20260916-2"></script>
+<script src="personalizacao-negocio.js?v=20260916-2"></script>
+<script src="auth.js?v=20260916-2"></script>
+<script src="admin.js?v=20260916-2"></script>
+<script src="navegacao.js?v=20260916-2"></script>
+<script src="notificacoes-sistema.js?v=20260916-2"></script>
+<script src="onboarding.js?v=20260916-2"></script>
+<script src="produtos-estoque.js?v=20260916-2"></script>
+<script src="clientes.js?v=20260916-2"></script>
+<script src="financeiro.js?v=20260916-2"></script>
+<script src="dashboard.js?v=20260916-2"></script>
+<script src="vendas.js?v=20260916-2"></script>
+<script src="fornecedores-compras.js?v=20260916-2"></script>
+<script src="funcionarios.js?v=20260916-2"></script>
+<script src="caixa.js?v=20260916-2"></script>
+<script src="financeiro-avancado.js?v=20260916-2"></script>
+<script src="relatorios.js?v=20260916-2"></script>
+<script src="perfil-config.js?v=20260916-2"></script>
+<script src="empresarial.js?v=20260916-2"></script>
+<script src="init.js?v=20260916-2"></script>
 
 <!-- Mobile Navigation Script -->
-<script src="mobile-nav.js"></script>
+<script src="mobile-nav.js?v=20260916-2"></script>
 
 <!-- PWA Initialization Script -->
-<script src="pwa-init.js"></script>
+<script src="pwa-init.js?v=20260916-2"></script>
 
 <!-- Fallback for browsers that don't support Service Workers -->
 <script>

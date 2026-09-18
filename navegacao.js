@@ -5,6 +5,16 @@
    ONBOARDING (primeira configuração)
 ========================================================= */
 function startOnboarding(){
+  const grid = document.getElementById('biztype-grid');
+  grid.replaceChildren();
+  TIPOS_NEGOCIO.forEach(tipo => {
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = 'biztype-card'; button.dataset.tipo = tipo;
+    const icon = document.createElement('i'); icon.className = tipo === 'Farmácia' ? 'fa-solid fa-briefcase-medical' : 'fa-solid fa-store';
+    const label = document.createElement('span'); label.textContent = tipo.replaceAll('/', ' / ');
+    button.append(icon, label); button.onclick = () => selectBusinessType(button);
+    grid.appendChild(button);
+  });
   pendingBusinessType = null;
   pendingLogoDataUrl = null;
   document.querySelectorAll('.biztype-card').forEach(c=>c.classList.remove('selected'));
@@ -49,6 +59,7 @@ function handleLogoUpload(e){
 
 async function handleOnboardingDetails(e){
   e.preventDefault();
+  if (!TIPOS_NEGOCIO.includes(pendingBusinessType)) { goToOnboardingStep(1); return; }
   const payload = {
     ...pendingRegisterData,
     telefone: document.getElementById('ob-phone').value.trim() || pendingRegisterData?.telefone,
@@ -201,9 +212,9 @@ function periodLabel(period){
    MODAIS
 ========================================================= */
 function openModal(id){
+  personalizarCamposNegocio();
   document.getElementById(id).classList.add('active');
   const dEl = document.querySelector('#'+id+' input[type="date"]');
   if(dEl && !dEl.value) dEl.value = todayISO();
 }
 function closeModal(id){ document.getElementById(id).classList.remove('active'); }
-

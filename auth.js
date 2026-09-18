@@ -6,6 +6,7 @@
 ========================================================= */
 function aplicarUsuarioLogado(u){
   state.user = {
+    id:u.id, empresaId:u.empresa.id,
     ownerName: u.nome, email: u.email, phone: u.telefone, papel: u.papel,
     businessName: u.empresa.nomeNegocio, businessType: u.empresa.tipoNegocio,
     city: u.empresa.cidade, address: u.empresa.endereco, logo: u.empresa.logoUrl,
@@ -25,6 +26,7 @@ function aplicarUsuarioLogado(u){
       features: ['Dashboard', 'Gestão de clientes', 'Financeiro', 'Caixa']
     }
   };
+  personalizarCamposNegocio();
   aplicarFiltroModulos();
 }
 
@@ -73,7 +75,7 @@ function handleLogout(){
   state = {
     user:null, transactions:[], clients:[], products:[], stockMovements:[],
     suppliers:[], purchases:[], sales:[], employees:[], cashSessions:[], caixaAtual:null,
-    currentPeriod:'mes'
+    currentPeriod:'hoje'
   };
   try{ localStorage.removeItem('contafacil_token'); }catch(e){}
   if (window.MobileNav) window.MobileNav.syncVisibility();
@@ -124,4 +126,3 @@ async function enterApp(){
   updateStockAlerts();
   renderNotifPanel();
 }
-

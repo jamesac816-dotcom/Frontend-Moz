@@ -7,8 +7,8 @@
 function stockInfo(p){
   const totalUnidades = p.qtdEstoqueUnidades;
   const caixas = Math.floor(totalUnidades / p.qtdPorCaixa);
-  const resto = totalUnidades % p.qtdPorCaixa;
-  const isLow = caixas <= p.qtdMinima;
+  const resto = Number((totalUnidades % p.qtdPorCaixa).toFixed(3));
+  const isLow = p.tipoItem !== 'servico' && p.status !== 'Inativo' && totalUnidades <= p.qtdMinima * p.qtdPorCaixa;
   return {totalUnidades, caixas, resto, isLow};
 }
 
@@ -19,6 +19,8 @@ async function carregarProdutos(busca){
 }
 
 async function renderProdutos(){
+  personalizarCamposNegocio();
+  renderSugestoesProdutos();
   try{
     await carregarProdutos(document.getElementById('produtos-search').value);
   }catch(err){ alert(err.message); return; }
@@ -37,7 +39,7 @@ async function renderProdutos(){
       <td class="mono" style="font-size:12.5px;">${p.codigoInterno||'—'}</td>
       <td style="text-align:right;" class="mono">${formatMZN(p.precoVendaUnidade)}</td>
       <td style="text-align:right;" class="mono">${formatMZN(p.precoVendaCaixa)}</td>
-      <td style="text-align:right;">${s.caixas} cx ${s.resto? '+ '+s.resto+' un':''}</td>
+      <td style="text-align:right;">${p.tipoItem==='servico'?'Sem stock':s.totalUnidades+' '+(p.unidadeMedida||'un')}</td>
       <td><span class="tag ${p.status==='Ativo'?'green':'red'}">${p.status}</span></td>
       <td class="row-actions" style="white-space:nowrap;">
         <button title="Editar" onclick="openProdutoModal('${p.id}')"><i class="fa-solid fa-pen"></i></button>
@@ -50,6 +52,7 @@ async function renderProdutos(){
 }
 
 function openProdutoModal(id){
+  personalizarCamposNegocio();
   const isEdit = !!id;
   document.getElementById('produto-modal-title').textContent = isEdit? 'Editar Produto':'Novo Produto';
   document.getElementById('produto-id').value = id||'';
@@ -78,6 +81,8 @@ function openProdutoModal(id){
     qtdEstoqueInput.title = 'Para alterar o estoque, use o módulo Estoque (Entrada/Saída).';
     document.getElementById('produto-qtd-minima').value = p.qtdMinima;
     document.getElementById('produto-status').value = p.status;
+    document.getElementById('produto-tipo').value = p.tipoItem || 'produto';
+    document.getElementById('produto-unidade').value = p.unidadeMedida || 'un';
     pendingProdutoImagemUrl = null;
     document.getElementById('produto-imagem-preview').innerHTML = p.imagem? `<img src="${p.imagem}">` : '<i class="fa-solid fa-image"></i>';
   } else {
@@ -87,7 +92,28 @@ function openProdutoModal(id){
     qtdEstoqueInput.title = '';
     pendingProdutoImagemUrl = null;
   }
+  actualizarCamposArtigo();
   openModal('modal-produto');
+}
+
+function actualizarCamposArtigo(){
+  const servico = document.getElementById('produto-tipo').value === 'servico';
+  document.getElementById('produto-modal-title').textContent=(document.getElementById('produto-id').value?'Editar ':'Novo ')+(servico?'Serviço':'Produto');
+  const unidade = document.getElementById('produto-unidade');
+  if(servico && unidade.value === 'un') unidade.value='servico';
+  if(!servico && unidade.value === 'servico') unidade.value='un';
+  for(const id of ['produto-qtd-caixa','produto-preco-venda-caixa','produto-qtd-estoque','produto-qtd-minima']) {
+    const input=document.getElementById(id);
+    input.closest('.field').hidden=servico;
+    input.required=!servico && id==='produto-qtd-caixa';
+    if(servico) input.value=id==='produto-qtd-caixa' ? 1 : 0;
+  }
+  document.getElementById('produto-qtd-estoque').step=unidade.value==='un'?'1':'0.001';
+  const labelCusto=document.getElementById('produto-preco-compra').closest('.field').querySelector?.('label');
+  if(labelCusto)labelCusto.textContent=servico?'Custo directo por serviço (MT)':'Preço de compra por '+unidade.value+' (MT)';
+  const labelStock=document.getElementById('produto-qtd-estoque').closest('.field').querySelector?.('label');
+  if(labelStock)labelStock.textContent='Quantidade em stock ('+unidade.value+')';
+  personalizarCamposNegocio();
 }
 
 function handleProdutoImagem(e){
@@ -105,6 +131,8 @@ async function handleSaveProduto(e){
   e.preventDefault();
   const id = document.getElementById('produto-id').value;
   const payload = {
+    tipoItem: document.getElementById('produto-tipo').value,
+    unidadeMedida: document.getElementById('produto-unidade').value,
     nome: document.getElementById('produto-nome').value.trim(),
     categoria: document.getElementById('produto-categoria').value.trim(),
     marca: document.getElementById('produto-marca').value.trim(),
@@ -116,11 +144,11 @@ async function handleSaveProduto(e){
     precoVendaUnidade: parseFloat(document.getElementById('produto-preco-venda-unidade').value),
     precoVendaCaixa: parseFloat(document.getElementById('produto-preco-venda-caixa').value),
     qtdPorCaixa: parseInt(document.getElementById('produto-qtd-caixa').value),
-    qtdMinimaCaixas: parseInt(document.getElementById('produto-qtd-minima').value),
+    qtdMinimaCaixas: Number(document.getElementById('produto-qtd-minima').value),
     status: document.getElementById('produto-status').value,
     imagemUrl: pendingProdutoImagemUrl
   };
-  if(!id) payload.qtdEstoqueUnidades = parseInt(document.getElementById('produto-qtd-estoque').value) || 0;
+  if(!id) payload.qtdEstoqueUnidades = Number(document.getElementById('produto-qtd-estoque').value) || 0;
 
   try{
     if(id) await apiFetch('/produtos/'+id, { method:'PUT', body: JSON.stringify(payload) });
@@ -153,13 +181,13 @@ async function renderEstoque(){
   }catch(err){ alert(err.message); return; }
 
   const tbodyNiveis = document.querySelector('#table-estoque-niveis tbody');
-  tbodyNiveis.innerHTML = state.products.map(p=>{
+  tbodyNiveis.innerHTML = state.products.filter(p=>p.tipoItem!=='servico').map(p=>{
     const s = stockInfo(p);
     return `
     <tr>
       <td><b>${p.nome}</b></td>
       <td style="text-align:right;">${p.qtdPorCaixa}</td>
-      <td style="text-align:right;">${s.caixas} cx ${s.resto? '+ '+s.resto+' un':''} <span style="color:var(--slate-400);font-size:12px;">(${s.totalUnidades} un.)</span></td>
+      <td style="text-align:right;">${s.caixas} cx ${s.resto? '+ '+s.resto+' un':''} <span style="color:var(--slate-400);font-size:12px;">(${s.totalUnidades} ${p.unidadeMedida||'un'})</span></td>
       <td style="text-align:right;">${p.qtdMinima}</td>
       <td><span class="stock-badge ${s.isLow?'low':'ok'}"><i class="fa-solid ${s.isLow?'fa-triangle-exclamation':'fa-circle-check'}"></i> ${s.isLow?'Estoque baixo':'Normal'}</span></td>
     </tr>`;
@@ -200,7 +228,7 @@ function updateStockAlerts(){
         <div><b>ATENÇÃO — Estoque a acabar</b>
         <div class="sab-list">${lowItems.map(p=>{
           const s = stockInfo(p);
-          return `O produto <b>${p.nome}</b> está a acabar. Restam apenas ${s.caixas} caixa(s). Recomendamos repor o estoque.`;
+          return `O produto <b>${p.nome}</b> está a acabar. Restam ${s.totalUnidades} ${p.unidadeMedida||'un'}. Recomendamos repor o estoque.`;
         }).join('<br>')}</div></div>`;
     } else {
       banner.style.display = 'none';
@@ -211,7 +239,7 @@ function updateStockAlerts(){
 
 function openMovimentoModal(){
   const select = document.getElementById('movimento-produto');
-  select.innerHTML = state.products.map(p=>`<option value="${p.id}">${p.nome}</option>`).join('');
+  select.innerHTML = state.products.filter(p=>p.tipoItem!=='servico').map(p=>`<option value="${p.id}">${p.nome}</option>`).join('');
   updateMovimentoContext();
   document.getElementById('movimento-motivo').value = '';
   document.getElementById('movimento-quantidade').value = '';
@@ -224,7 +252,7 @@ function updateMovimentoContext(){
   const ctx = document.getElementById('movimento-contexto');
   if(p){
     const s = stockInfo(p);
-    ctx.textContent = `1 caixa = ${p.qtdPorCaixa} unidades · Estoque actual: ${s.caixas} cx + ${s.resto} un. (${s.totalUnidades} unidades)`;
+    ctx.textContent = `1 embalagem = ${p.qtdPorCaixa} ${p.unidadeMedida||'un'} · Stock actual: ${s.totalUnidades} ${p.unidadeMedida||'un'}`;
   } else {
     ctx.textContent = '';
   }
@@ -235,7 +263,7 @@ async function handleMovimentoEstoque(e){
   const payload = {
     produtoId: document.getElementById('movimento-produto').value,
     tipo: document.getElementById('movimento-tipo').value,
-    quantidade: parseInt(document.getElementById('movimento-quantidade').value),
+    quantidade: Number(document.getElementById('movimento-quantidade').value),
     unidade: document.getElementById('movimento-unidade').value,
     motivo: document.getElementById('movimento-motivo').value.trim()
   };
@@ -246,4 +274,3 @@ async function handleMovimentoEstoque(e){
     renderDashboard();
   }catch(err){ alert(err.message); }
 }
-

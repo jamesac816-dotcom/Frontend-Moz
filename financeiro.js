@@ -111,6 +111,7 @@ async function handleAddReceita(e){
     await apiFetch('/transacoes', { method:'POST', body: JSON.stringify(payload) });
     e.target.reset();
     closeModal('modal-receita');
+    marcarOnboardingCompleto('registar-entrada');
     await renderReceitas();
     renderDashboard();
   }catch(err){ alert(err.message); }
@@ -130,6 +131,7 @@ async function handleAddDespesa(e){
     await apiFetch('/transacoes', { method:'POST', body: JSON.stringify(payload) });
     e.target.reset();
     closeModal('modal-despesa');
+    marcarOnboardingCompleto('registar-despesa');
     await renderDespesas();
     renderDashboard();
   }catch(err){ alert(err.message); }
@@ -144,4 +146,3 @@ async function deleteTransaction(id){
     renderDashboard();
   }catch(err){ alert(err.message); }
 }
-

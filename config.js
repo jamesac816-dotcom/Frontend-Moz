@@ -29,8 +29,15 @@ let authToken = null;
  * - Lança um erro com a mensagem vinda da API, para podermos
  *   mostrar isso ao utilizador com alert()/mensagens no ecrã
  */
+const operacoesPendentes = new Map();
 async function apiFetch(path, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  const atomica = options.method === 'POST' && (/^\/(vendas|compras)$/.test(path) || path === '/estoque/movimentacoes' || /^\/clientes\/[^/]+\/pagamentos$/.test(path) || /^\/pagamentos\/(mpesa|emola)\/c2b$/.test(path));
+  const assinatura = atomica ? [state.user?.id, path, options.body].join('|') : null;
+  if(atomica) {
+    if(!operacoesPendentes.has(assinatura)) operacoesPendentes.set(assinatura, crypto.randomUUID());
+    headers['Idempotency-Key'] = operacoesPendentes.get(assinatura);
+  }
   if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
 
   let res;
@@ -46,12 +53,14 @@ async function apiFetch(path, options = {}) {
   try { data = await res.json(); } catch (e) { /* resposta sem corpo JSON */ }
 
   if (!res.ok) {
+    if(atomica && res.status>=400 && res.status<500) operacoesPendentes.delete(assinatura);
     if (res.status === 401 && authToken) {
       alert('A sua sessão expirou. Por favor entre novamente.');
       handleLogout();
     }
     throw new Error((data && data.erro) || 'Ocorreu um erro. Tente novamente.');
   }
+  if(atomica) operacoesPendentes.delete(assinatura);
   return data;
 }
 
@@ -72,7 +81,7 @@ let state = {
   employees: [],
   cashSessions: [],
   caixaAtual: null,
-  currentPeriod: 'mes',
+  currentPeriod: 'hoje',
   payables: [],
   fixedAssets: [],
   budgetLines: [],
@@ -388,6 +397,7 @@ function aplicarFiltroModulos(){
 ========================================================= */
 function normalizeProduto(r){
   return {
+    tipoItem:r.tipo_item || 'produto', unidadeMedida:r.unidade_medida || 'un',
     id: r.id, nome:r.nome, categoria:r.categoria||'', marca:r.marca||'',
     codigoInterno:r.codigo_interno||'', codigoBarras:r.codigo_barras||'',
     fornecedorId:r.fornecedor_id||'', descricao:r.descricao||'',
@@ -398,7 +408,7 @@ function normalizeProduto(r){
   };
 }
 function normalizeCliente(r){
-  return { id:r.id, nome:r.nome, telefone:r.telefone||'', nif:r.nif||'', saldoDevedor:Number(r.saldo_devedor) };
+  return { id:r.id, nome:r.nome, telefone:r.telefone||'', nif:r.nif||'', saldoDevedor:Number(r.saldo_devedor), limiteCredito:r.limite_credito==null?null:Number(r.limite_credito) };
 }
 function normalizeFornecedor(r){
   return { id:r.id, nome:r.nome, empresa:r.empresa||'', telefone:r.telefone||'', email:r.email||'', cidade:r.cidade||'', produtos:r.produtos_fornecidos||'' };
@@ -413,4 +423,3 @@ function normalizeMovimento(r){
   return { id:r.id, productId:r.produto_id, tipo:r.tipo, quantidade:Number(r.quantidade_unidades),
     motivo:r.motivo||'', data:r.data, hora:(r.hora||'').slice(0,5), usuario:r.usuario_nome||state.user.ownerName };
 }
-

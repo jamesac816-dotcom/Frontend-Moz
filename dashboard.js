@@ -7,6 +7,8 @@
 let chartMonthly, chartCatDashboard, chartReceitasCat, chartDespesasCat;
 
 async function renderDashboard(){
+  renderPersonalizacaoDashboard();
+  renderAlertasNegocio([]);
   const periodo = state.currentPeriod;
   let resumo, mensal, despCat, recentes;
   try{
@@ -21,12 +23,15 @@ async function renderDashboard(){
   document.getElementById('card-saldo').textContent = formatMZN(resumo.saldoAtual);
   document.getElementById('card-receitas').textContent = formatMZN(resumo.receitasPeriodo);
   document.getElementById('card-despesas').textContent = formatMZN(resumo.despesasPeriodo);
-  document.getElementById('card-lucro').textContent = formatMZN(resumo.lucroPeriodo);
+  document.getElementById('card-lucro').textContent = resumo.lucroPeriodo==null ? 'A rever' : formatMZN(resumo.lucroPeriodo);
   document.getElementById('card-lucro').style.color = resumo.lucroPeriodo>=0 ? 'var(--green-600)':'var(--danger)';
 
-  document.getElementById('label-receitas').textContent = 'Receitas '+periodLabel(periodo);
+  document.getElementById('label-receitas').textContent = 'Entradas '+periodLabel(periodo);
   document.getElementById('label-despesas').textContent = 'Despesas '+periodLabel(periodo);
-  document.getElementById('label-lucro').textContent = 'Lucro '+periodLabel(periodo);
+  document.getElementById('label-lucro').textContent = 'Lucro estimado '+periodLabel(periodo);
+  document.getElementById('card-lucro').title = 'Margem das vendas, mais outras receitas, menos despesas operacionais. Compras de stock e recebimentos de dívidas não são contados duas vezes.';
+  const aviso=document.getElementById('dashboard-historico-aviso');
+  aviso.hidden=!resumo.historicoPorRever;
   document.getElementById('card-receitas-count').textContent = resumo.quantidadeReceitas + ' lanç.';
   document.getElementById('card-despesas-count').textContent = resumo.quantidadeDespesas + ' lanç.';
 
@@ -43,7 +48,7 @@ async function renderDashboard(){
 
   renderChartMonthly(mensal);
   renderChartCatDashboard(despCat);
-  renderDashboardKpisExtra(periodo);
+  await renderDashboardKpisExtra(periodo);
   
   // Gerar notificações no dashboard
   if(window.gerarNotificacoesSistema) {
@@ -57,6 +62,7 @@ async function renderDashboard(){
 }
 
 async function renderDashboardKpisExtra(periodo){
+  const alertas = [];
   const ativos = state.user.modulosAtivos || Object.keys(MODULOS);
   document.querySelectorAll('#cards-grid-kpis [data-modulo]').forEach(card=>{
     card.style.display = ativos.includes(card.dataset.modulo) ? '' : 'none';
@@ -65,17 +71,12 @@ async function renderDashboardKpisExtra(periodo){
   // Vendas de hoje + ticket médio (módulo "vendas")
   if(ativos.includes('vendas')){
     try{
-      const isVenda = (t) => /venda/i.test(String(t.categoria || '') + ' ' + String(t.descricao || ''));
-
-      const vendasHoje = (await carregarTransacoes('receita','hoje')).filter(isVenda);
-      const totalHoje = vendasHoje.reduce((s,t)=>s+t.valor,0);
-      document.getElementById('card-vendas-hoje').textContent = formatMZN(totalHoje);
-      document.getElementById('card-vendas-hoje-count').textContent = vendasHoje.length + ' venda(s) hoje';
-
-      const vendasMes = (await carregarTransacoes('receita', periodo)).filter(isVenda);
-      const totalMes = vendasMes.reduce((s,t)=>s+t.valor,0);
-      const ticketMedio = vendasMes.length ? totalMes/vendasMes.length : 0;
+      const [hoje,seleccionado]=await Promise.all([apiFetch('/dashboard/resumo?periodo=hoje'),apiFetch('/dashboard/resumo?periodo='+periodo)]);
+      document.getElementById('card-vendas-hoje').textContent = formatMZN(hoje.vendasPeriodo);
+      document.getElementById('card-vendas-hoje-count').textContent = hoje.quantidadeVendas + ' venda(s) hoje';
+      const ticketMedio = seleccionado.quantidadeVendas ? seleccionado.vendasPeriodo/seleccionado.quantidadeVendas : 0;
       document.getElementById('card-ticket-medio').textContent = formatMZN(ticketMedio);
+      document.getElementById('card-ticket-medio').closest('.stat-card').querySelector('.sc-label').textContent = 'Ticket médio ' + periodLabel(periodo);
     }catch(err){ /* silencioso — não bloqueia o resto do dashboard */ }
   }
 
@@ -85,6 +86,7 @@ async function renderDashboardKpisExtra(periodo){
       await carregarProdutos();
       const emFalta = state.products.filter(p=>stockInfo(p).isLow).length;
       document.getElementById('card-produtos-falta').textContent = emFalta;
+      alertas.push({valor: emFalta, view: 'estoque', texto: `${emFalta} produto(s) com stock baixo`});
     }catch(err){ /* silencioso */ }
   }
 
@@ -92,16 +94,19 @@ async function renderDashboardKpisExtra(periodo){
   if(ativos.includes('financeiro')){
     try{
       await carregarClientes();
-      const totalReceber = state.clients.reduce((s,c)=>s+c.saldoDevedor,0);
+      const totalReceber = state.clients.reduce((s,c)=>s+Math.max(Number(c.saldoDevedor || 0),0),0);
       document.getElementById('card-contas-receber').textContent = formatMZN(totalReceber);
+      alertas.push({valor: totalReceber, view: 'clientes', texto: `Clientes com dívidas: ${formatMZN(totalReceber)}`});
     }catch(err){ /* silencioso */ }
     try{
       const pagar = await apiFetch('/contas-pagar');
       const totalPagar = pagar.filter(c=>c.estado!=='Pago').reduce((s,c)=>s+Number(c.valor),0);
       document.getElementById('card-contas-pagar').textContent = formatMZN(totalPagar);
+      alertas.push({valor: totalPagar, view: 'contaspagar', texto: `Pagamentos pendentes: ${formatMZN(totalPagar)}`});
     }catch(err){ /* silencioso */ }
   }
 
+  renderAlertasNegocio(alertas);
   // Estado do caixa (módulo "caixa")
   if(ativos.includes('caixa')){
     try{
@@ -171,4 +176,3 @@ function renderChartCatDashboard(despCatRows){
     ctx.canvas.parentElement.appendChild(note);
   }
 }
-

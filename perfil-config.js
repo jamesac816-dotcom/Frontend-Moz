@@ -72,7 +72,7 @@ function renderPerfil(){
   document.getElementById('perfil-owner').value = u.ownerName;
   document.getElementById('perfil-phone').value = u.phone;
   document.getElementById('perfil-email').value = u.email;
-  document.getElementById('perfil-tipo').value = u.businessType || '—';
+  preencherTiposNegocio(document.getElementById('perfil-tipo'), u.businessType);
   document.getElementById('perfil-cidade').value = u.city || '';
   document.getElementById('perfil-endereco').value = u.address || '';
 
@@ -99,16 +99,20 @@ async function handleSaveProfile(e){
   const phone = document.getElementById('perfil-phone').value.trim();
   const cidade = document.getElementById('perfil-cidade').value.trim();
   const endereco = document.getElementById('perfil-endereco').value.trim();
+  const tipoNegocio = document.getElementById('perfil-tipo').value;
 
   const btn = e.target.querySelector('button[type="submit"]');
   const original = btn.innerHTML; btn.disabled = true; btn.innerHTML = 'A guardar...';
   try{
     await Promise.all([
-      apiFetch('/auth/empresa', { method:'PUT', body: JSON.stringify({ nomeNegocio, cidade, endereco, telefone: phone }) }),
+      apiFetch('/auth/empresa', { method:'PUT', body: JSON.stringify({ nomeNegocio, tipoNegocio, cidade, endereco, telefone: phone }) }),
       apiFetch('/auth/usuario', { method:'PUT', body: JSON.stringify({ nome: ownerName, telefone: phone }) })
     ]);
     state.user.businessName = nomeNegocio; state.user.ownerName = ownerName; state.user.phone = phone;
     state.user.city = cidade; state.user.address = endereco;
+    state.user.businessType = tipoNegocio;
+    renderPersonalizacaoDashboard();
+    renderSugestoesProdutos();
     updateSidebarUser();
     renderPerfil();
     btn.innerHTML = '<i class="fa-solid fa-check"></i> Guardado!';
@@ -364,4 +368,3 @@ async function handleTrocarSenha(e){
     erro.style.display = 'block';
   }
 }
-

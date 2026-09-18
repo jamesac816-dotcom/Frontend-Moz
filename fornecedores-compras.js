@@ -91,7 +91,7 @@ async function renderCompras(){
 function openCompraModal(){
   document.querySelector('#modal-compra form').reset();
   document.getElementById('compra-fornecedor').innerHTML = state.suppliers.map(f=>`<option value="${f.id}">${f.nome}${f.empresa? ' — '+f.empresa:''}</option>`).join('');
-  document.getElementById('compra-produto').innerHTML = state.products.map(p=>`<option value="${p.id}">${p.nome}</option>`).join('');
+  document.getElementById('compra-produto').innerHTML = state.products.filter(p=>p.tipoItem!=='servico').map(p=>`<option value="${p.id}">${p.nome}</option>`).join('');
   document.getElementById('compra-data').value = todayISO();
   updateCompraContext();
   openModal('modal-compra');
@@ -100,7 +100,7 @@ function openCompraModal(){
 function updateCompraContext(){
   const id = document.getElementById('compra-produto').value;
   const p = state.products.find(x=>x.id===id);
-  document.getElementById('compra-contexto').textContent = p? `Custo de compra actual: ${formatMZN(p.precoCompra)} · Estoque actual: ${p.qtdEstoqueUnidades} unidades` : '';
+  document.getElementById('compra-contexto').textContent = p? `Custo de compra actual: ${formatMZN(p.precoCompra)} · Estoque actual: ${p.qtdEstoqueUnidades} ${p.unidadeMedida||'un'}` : '';
 }
 
 async function handleAddCompra(e){
@@ -110,7 +110,7 @@ async function handleAddCompra(e){
     data: document.getElementById('compra-data').value,
     itens: [{
       produtoId: document.getElementById('compra-produto').value,
-      quantidade: parseInt(document.getElementById('compra-quantidade').value),
+      quantidade: Number(document.getElementById('compra-quantidade').value),
       custoUnitario: parseFloat(document.getElementById('compra-custo-unitario').value)
     }]
   };
@@ -122,4 +122,3 @@ async function handleAddCompra(e){
     renderDashboard();
   }catch(err){ alert(err.message); }
 }
-

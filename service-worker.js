@@ -6,7 +6,7 @@
  * Apenas recursos estáticos e UI são cacheados.
  */
 
-const CACHE_NAME = 'contafacil-v1';
+const CACHE_NAME = 'contafacil-v6-operacoes';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

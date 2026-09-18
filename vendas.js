@@ -10,13 +10,13 @@ function renderPdvProducts(){
   const items = state.products.filter(p => p.status==='Ativo' && (p.nome.toLowerCase().includes(q) || (p.codigoInterno||'').toLowerCase().includes(q)));
   grid.innerHTML = items.map(p=>{
     const s = stockInfo(p);
-    const disabled = s.totalUnidades<=0;
+    const disabled = p.tipoItem!=='servico' && s.totalUnidades<=0;
     return `
     <button type="button" class="pdv-product-card" ${disabled?'style="opacity:.45;pointer-events:none;"':''} onclick="addToCart('${p.id}')">
       <div class="ppc-icon">${p.imagem? `<img src="${p.imagem}">`:'<i class="fa-solid fa-box"></i>'}</div>
       <div class="ppc-nome">${p.nome}</div>
       <div class="ppc-preco">${formatMZN(p.precoVendaUnidade)}</div>
-      <div class="ppc-stock">${s.totalUnidades} un. em estoque</div>
+      <div class="ppc-stock">${p.tipoItem==='servico'?'Serviço sem stock':s.totalUnidades+' '+(p.unidadeMedida||'un')+' em stock'}</div>
     </button>`;
   }).join('') || '<p style="color:var(--slate-400);font-size:13.5px;grid-column:1/-1;text-align:center;padding:20px 0;">Nenhum produto encontrado.</p>';
 }
@@ -26,12 +26,13 @@ function addToCart(productId){
   const s = stockInfo(p);
   const item = pdvCart.find(i=>i.productId===productId);
   const qtdAtual = item? item.qtd : 0;
-  if(qtdAtual+1 > s.totalUnidades){
+  const incremento=p.tipoItem==='servico'?1:Math.min(1,s.totalUnidades-qtdAtual);
+  if(p.tipoItem!=='servico' && incremento<=0){
     alert(`Estoque insuficiente de ${p.nome}. Restam apenas ${s.totalUnidades} unidades.`);
     return;
   }
-  if(item) item.qtd += 1;
-  else pdvCart.push({productId, qtd:1});
+  if(item) item.qtd = Number((item.qtd+incremento).toFixed(3));
+  else pdvCart.push({productId, qtd:incremento});
   renderPdvCart();
 }
 
@@ -42,11 +43,19 @@ function changeCartQty(productId, delta){
   const s = stockInfo(p);
   const novaQtd = item.qtd + delta;
   if(novaQtd<=0){ pdvCart = pdvCart.filter(i=>i.productId!==productId); }
-  else if(novaQtd > s.totalUnidades){ alert(`Estoque insuficiente de ${p.nome}.`); return; }
+  else if(p.tipoItem!=='servico' && novaQtd > s.totalUnidades){ alert(`Estoque insuficiente de ${p.nome}.`); return; }
   else item.qtd = novaQtd;
   renderPdvCart();
 }
 
+function definirQuantidadeCart(id,valor){
+  const p=state.products.find(p=>p.id===id),item=pdvCart.find(i=>i.productId===id),q=Number(valor);
+  if(!p || !item) return;
+  if(!Number.isFinite(q) || q<=0 || Number(q.toFixed(3))!==q || ((p.unidadeMedida||'un')==='un' && !Number.isInteger(q)) || (p.tipoItem!=='servico' && q>p.qtdEstoqueUnidades)) {
+    alert('Quantidade inválida ou superior ao stock disponível.'); renderPdvCart(); return;
+  }
+  item.qtd=q;renderPdvCart();
+}
 function renderPdvCart(){
   const container = document.getElementById('pdv-cart-items');
   if(!pdvCart.length){
@@ -56,10 +65,10 @@ function renderPdvCart(){
       const p = state.products.find(x=>x.id===i.productId);
       return `
       <div class="pdv-cart-item">
-        <div><b style="font-size:13.5px;">${p.nome}</b><div style="font-size:12px;color:var(--slate-400);">${formatMZN(p.precoVendaUnidade)} / un.</div></div>
+        <div><b style="font-size:13.5px;">${p.nome}</b><div style="font-size:12px;color:var(--slate-400);">${formatMZN(p.precoVendaUnidade)} / ${p.unidadeMedida||'un'}</div></div>
         <div class="pdv-qty-ctrl">
           <button type="button" onclick="changeCartQty('${p.id}',-1)"><i class="fa-solid fa-minus"></i></button>
-          <span class="mono" style="min-width:20px;text-align:center;">${i.qtd}</span>
+          <input type="number" aria-label="Quantidade" min="${p.unidadeMedida==='un'?1:0.001}" step="${p.unidadeMedida==='un'?1:0.001}" value="${i.qtd}" style="width:76px;max-width:100%;text-align:center;" onchange="definirQuantidadeCart('${p.id}',this.value)">
           <button type="button" onclick="changeCartQty('${p.id}',1)"><i class="fa-solid fa-plus"></i></button>
         </div>
       </div>`;
@@ -229,9 +238,8 @@ async function finalizarVenda(){
   }
 
   // Validação de limite de crédito quando a dívida for usada
-  if(cliente && fazerDivida){
-    const limitePadrao = 5000; // MT — ajustar conforme política da empresa
-    const limiteCliente = cliente.limiteCredito || limitePadrao;
+  if(cliente && fazerDivida && cliente.limiteCredito!=null){
+    const limiteCliente = cliente.limiteCredito;
     if(cliente.saldoDevedor + total > limiteCliente){
       alert(`⛔ Cliente "${cliente.nome}" atingiu o limite de crédito.\n\nSaldo actual: ${formatMZN(cliente.saldoDevedor)}\nLimite: ${formatMZN(limiteCliente)}\nEsta compra ultrapassaria: ${formatMZN(cliente.saldoDevedor + total)}\n\nCobra em dinheiro ou contacte o cliente.`);
       return;
@@ -513,4 +521,3 @@ async function renderPagamentosMoveis(){
     </tr>`).join('');
   document.getElementById('empty-pagamentos-moveis').style.display = rows.length? 'none':'block';
 }
-

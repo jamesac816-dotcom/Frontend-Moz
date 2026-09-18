@@ -40,7 +40,8 @@ async function handleAddCliente(e){
     nome: document.getElementById('cliente-nome').value.trim(),
     telefone: document.getElementById('cliente-telefone').value.trim(),
     nif: document.getElementById('cliente-nif').value.trim(),
-    saldoDevedor: parseFloat(document.getElementById('cliente-saldo').value || 0)
+    saldoDevedor: parseFloat(document.getElementById('cliente-saldo').value || 0),
+    limiteCredito:document.getElementById('cliente-limite').value===''?null:Number(document.getElementById('cliente-limite').value)
   };
   try{
     await apiFetch('/clientes', { method:'POST', body: JSON.stringify(payload) });
@@ -97,4 +98,3 @@ async function verHistorico(clienteId){
     openModal('modal-historico');
   }catch(err){ alert(err.message); }
 }
-
