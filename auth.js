@@ -86,8 +86,14 @@ function handleLogout(){
 async function restoreSession(){
   try{
     const saved = localStorage.getItem('contafacil_token');
-    if(!saved) return;
+    if(!saved) {
+      showScreen('landing');
+      return;
+    }
+
     authToken = saved;
+    showScreen('app');
+
     // Pede ao backend os dados do utilizador; se falhar, limpa o token
     const data = await apiFetch('/auth/me');
     if(data){
@@ -102,6 +108,7 @@ async function restoreSession(){
   }catch(err){
     authToken = null;
     try{ localStorage.removeItem('contafacil_token'); }catch(e){}
+    showScreen('landing');
   }
 }
 

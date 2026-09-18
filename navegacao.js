@@ -92,8 +92,10 @@ async function handleOnboardingDetails(e){
    NAVEGAÇÃO ENTRE ECRÃS
 ========================================================= */
 function showScreen(name){
+  const target = document.getElementById('screen-'+name);
+  if (!target) return;
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('screen-'+name).classList.add('active');
+  target.classList.add('active');
   if (window.MobileNav) {
     window.MobileNav.syncVisibility();
   }

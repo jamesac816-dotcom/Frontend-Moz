@@ -31,7 +31,7 @@ async function renderDashboard(){
   document.getElementById('label-lucro').textContent = 'Lucro estimado '+periodLabel(periodo);
   document.getElementById('card-lucro').title = 'Margem das vendas, mais outras receitas, menos despesas operacionais. Compras de stock e recebimentos de dívidas não são contados duas vezes.';
   const aviso=document.getElementById('dashboard-historico-aviso');
-  aviso.hidden=!resumo.historicoPorRever;
+  if (aviso) aviso.hidden = !resumo.historicoPorRever;
   document.getElementById('card-receitas-count').textContent = resumo.quantidadeReceitas + ' lanç.';
   document.getElementById('card-despesas-count').textContent = resumo.quantidadeDespesas + ' lanç.';
 

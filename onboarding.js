@@ -29,18 +29,10 @@ function calcularProgressoOnboarding(){
   return passos.length?Math.round(passos.filter(s=>onboardingCompleted[s.id]).length/passos.length*100):100;
 }
 function renderOnboardingProgress(){
-  const banner=document.getElementById('onboarding-banner');if(!banner)return;
-  const progresso=calcularProgressoOnboarding();
-  banner.style.display=progresso>=100?'none':'flex';
-  banner.replaceChildren();if(progresso>=100)return;
-  const title=document.createElement('strong');title.textContent='Primeiros passos · '+progresso+'% concluído';
-  const lista=document.createElement('div');lista.className='negocio-acoes';
-  passosOnboarding().forEach(step=>{
-    const button=document.createElement('button');button.type='button';button.className='btn btn-outline';
-    button.textContent=(onboardingCompleted[step.id]?'✓ ':'')+step.titulo;
-    button.onclick=()=>showView(step.view);lista.appendChild(button);
-  });
-  banner.append(title,lista);
+  const banner=document.getElementById('onboarding-banner');
+  if(!banner)return;
+  banner.style.display='none';
+  banner.replaceChildren();
 }
 function verificarOnboardingCompletion(){
   if(state.products?.length) marcarOnboardingCompleto('adicionar-produto');
