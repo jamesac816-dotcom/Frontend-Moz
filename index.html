@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/ios/32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/ios/16.png">
 <link rel="apple-touch-icon" href="/icons/ios/192.png">
-<link rel="stylesheet" href="responsive-mobile.css">
+<link rel="stylesheet" href="responsive-mobile.css?v=20260924-1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -1453,7 +1453,8 @@ body.offline-mode::before {
           <div class="grid-2">
             <div class="field">
               <label>Telemóvel (WhatsApp)</label>
-              <div class="input-wrap"><i class="fa-solid fa-phone field-icon"></i><input type="tel" id="reg-phone" placeholder="84 000 0000" required></div>
+              <div class="input-wrap"><i class="fa-solid fa-phone field-icon"></i><input type="tel" id="reg-phone" placeholder="84 000 0000" autocomplete="tel" oninput="this.setCustomValidity('')" required></div>
+              <small>Telefone de contacto: 9 dígitos, com ou sem +258.</small>
             </div>
             <div class="field">
               <label>E-mail</label>
@@ -1635,7 +1636,7 @@ body.offline-mode::before {
     <div class="main-area">
       <div class="topbar">
         <div style="display:flex;align-items:center;gap:14px;">
-          <button class="hamburger" onclick="toggleSidebar(true)"><i class="fa-solid fa-bars"></i></button>
+          <button type="button" class="hamburger" onclick="toggleSidebar()" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
           <div class="topbar-title">
             <div class="crumb" id="topbar-crumb">Visão geral</div>
             <h1 id="topbar-title">Dashboard</h1>
@@ -1654,6 +1655,13 @@ body.offline-mode::before {
               <div class="notif-panel-head">Notificações</div>
               <div class="notif-panel-body" id="notif-panel-body"></div>
             </div>
+          </div>
+        </div>
+        <div class="assinatura-resumo">
+          <div class="assinatura-info"><strong id="assinatura-plano">Meu plano</strong><small id="assinatura-datas"></small></div>
+          <div class="assinatura-acoes">
+            <button type="button" class="btn btn-outline" onclick="openMeuPlano()">Planos</button>
+            <button type="button" class="btn btn-primary" onclick="renovarPlanoAtual()" title="Solicitar renovação pelo WhatsApp">Renovar</button>
           </div>
         </div>
       </div>
@@ -2406,6 +2414,7 @@ body.offline-mode::before {
           <div class="panel-head"><h3>Planos e preços</h3></div>
           <div class="panel-body">
             <div id="cfg-plano-atual" style="margin-bottom:12px; font-weight:600; color:var(--blue-700);"></div>
+            <p id="cfg-assinatura-datas" style="margin-bottom:12px;"></p>
             <div id="cfg-planos-lista"></div>
           </div>
         </div>
@@ -3281,32 +3290,32 @@ body.offline-mode::before {
 </script>
 
 <!-- Scripts da aplicação, divididos por módulo (ver pasta ) -->
-<script src="config.js?v=20260916-2"></script>
-<script src="personalizacao-negocio.js?v=20260916-2"></script>
-<script src="auth.js?v=20260916-2"></script>
-<script src="admin.js?v=20260916-2"></script>
-<script src="navegacao.js?v=20260916-2"></script>
-<script src="notificacoes-sistema.js?v=20260916-2"></script>
-<script src="onboarding.js?v=20260916-2"></script>
-<script src="produtos-estoque.js?v=20260916-2"></script>
-<script src="clientes.js?v=20260916-2"></script>
-<script src="financeiro.js?v=20260916-2"></script>
-<script src="dashboard.js?v=20260916-2"></script>
-<script src="vendas.js?v=20260916-2"></script>
-<script src="fornecedores-compras.js?v=20260916-2"></script>
-<script src="funcionarios.js?v=20260916-2"></script>
-<script src="caixa.js?v=20260916-2"></script>
-<script src="financeiro-avancado.js?v=20260916-2"></script>
-<script src="relatorios.js?v=20260916-2"></script>
-<script src="perfil-config.js?v=20260916-2"></script>
-<script src="empresarial.js?v=20260916-2"></script>
-<script src="init.js?v=20260916-2"></script>
+<script src="config.js?v=20260924-1"></script>
+<script src="personalizacao-negocio.js?v=20260924-1"></script>
+<script src="auth.js?v=20260924-1"></script>
+<script src="admin.js?v=20260924-1"></script>
+<script src="navegacao.js?v=20260924-1"></script>
+<script src="notificacoes-sistema.js?v=20260924-1"></script>
+<script src="onboarding.js?v=20260924-1"></script>
+<script src="produtos-estoque.js?v=20260924-1"></script>
+<script src="clientes.js?v=20260924-1"></script>
+<script src="financeiro.js?v=20260924-1"></script>
+<script src="dashboard.js?v=20260924-1"></script>
+<script src="vendas.js?v=20260924-1"></script>
+<script src="fornecedores-compras.js?v=20260924-1"></script>
+<script src="funcionarios.js?v=20260924-1"></script>
+<script src="caixa.js?v=20260924-1"></script>
+<script src="financeiro-avancado.js?v=20260924-1"></script>
+<script src="relatorios.js?v=20260924-1"></script>
+<script src="perfil-config.js?v=20260924-1"></script>
+<script src="empresarial.js?v=20260924-1"></script>
+<script src="init.js?v=20260924-1"></script>
 
 <!-- Mobile Navigation Script -->
-<script src="mobile-nav.js?v=20260916-2"></script>
+<script src="mobile-nav.js?v=20260924-1"></script>
 
 <!-- PWA Initialization Script -->
-<script src="pwa-init.js?v=20260916-2"></script>
+<script src="pwa-init.js?v=20260924-1"></script>
 
 <!-- Fallback for browsers that don't support Service Workers -->
 <script>

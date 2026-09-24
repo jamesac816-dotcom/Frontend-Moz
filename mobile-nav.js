@@ -29,11 +29,7 @@ class MobileNavManager {
    * Setup de event listeners
    */
   setupEventListeners() {
-    // Hamburger menu
-    const hamburger = document.querySelector('.hamburger');
-    if (hamburger) {
-      hamburger.addEventListener('click', () => this.toggleDrawer());
-    }
+    // O botão do cabeçalho já chama toggleSidebar no HTML.
 
     // Overlay para fechar drawer
     const overlay = document.getElementById('sidebar-overlay');
@@ -76,6 +72,7 @@ class MobileNavManager {
     const bottomNav = document.querySelector('.bottom-nav');
 
     if (!appActive) {
+      this.closeDrawer();
       if (bottomNav) bottomNav.remove();
       return;
     }
@@ -147,6 +144,7 @@ class MobileNavManager {
     }
 
     this.drawerOpen = true;
+    document.querySelector('#screen-app .hamburger')?.setAttribute('aria-expanded', 'true');
   }
 
   /**
@@ -166,6 +164,7 @@ class MobileNavManager {
     }
 
     this.drawerOpen = false;
+    document.querySelector('#screen-app .hamburger')?.setAttribute('aria-expanded', 'false');
   }
 
   /**

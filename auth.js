@@ -8,6 +8,7 @@ function aplicarUsuarioLogado(u){
   state.user = {
     id:u.id, empresaId:u.empresa.id,
     ownerName: u.nome, email: u.email, phone: u.telefone, papel: u.papel,
+    inscritoEm: u.inscritoEm || null,
     businessName: u.empresa.nomeNegocio, businessType: u.empresa.tipoNegocio,
     city: u.empresa.cidade, address: u.empresa.endereco, logo: u.empresa.logoUrl,
     nuit: u.empresa.nuit, formaJuridica: u.empresa.formaJuridica, sectorActividade: u.empresa.sectorActividade,
@@ -28,6 +29,7 @@ function aplicarUsuarioLogado(u){
   };
   personalizarCamposNegocio();
   aplicarFiltroModulos();
+  renderResumoAssinatura();
 }
 
 async function handleLogin(e){
@@ -60,10 +62,18 @@ async function handleLogin(e){
 
 function handleRegister(e){
   e.preventDefault();
+  const phoneInput = document.getElementById('reg-phone');
+  const telefone = phoneInput.value.replace(/[\s()-]/g, '');
+  if (!/^(?:\+?258)?\d{9}$/.test(telefone)) {
+    phoneInput.setCustomValidity('Indique 9 dígitos, com ou sem +258.');
+    phoneInput.reportValidity();
+    return;
+  }
+  phoneInput.setCustomValidity('');
   pendingRegisterData = {
     nome: document.getElementById('reg-owner').value.trim(),
     nomeNegocio: document.getElementById('reg-business').value.trim(),
-    telefone: document.getElementById('reg-phone').value.trim(),
+    telefone,
     email: document.getElementById('reg-email').value.trim(),
     senha: document.getElementById('reg-password').value
   };
@@ -71,6 +81,14 @@ function handleRegister(e){
 }
 
 function handleLogout(){
+  if (!window.confirm('Queres sair da conta? Para voltar, terás de iniciar sessão.')) return;
+  toggleSidebar(false);
+  toggleAdminSidebar(false);
+  document.querySelectorAll('.modal-backdrop.active').forEach(el => el.classList.remove('active'));
+  document.body.style.overflow = '';
+  pendingRegisterData = null;
+  pendingLogoDataUrl = null;
+  pdvCart = [];
   authToken = null;
   state = {
     user:null, transactions:[], clients:[], products:[], stockMovements:[],
@@ -80,6 +98,7 @@ function handleLogout(){
   try{ localStorage.removeItem('contafacil_token'); }catch(e){}
   if (window.MobileNav) window.MobileNav.syncVisibility();
   showScreen('landing');
+  document.querySelectorAll('input[type="password"]').forEach(el => { el.value = ''; });
 }
 
 // Tenta restaurar sessão a partir do token guardado em localStorage.

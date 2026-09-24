@@ -167,7 +167,34 @@ async function handleSaveDadosFiscais(e){
 /* =========================================================
    CONFIGURAÇÕES
 ========================================================= */
+function formatarDataAssinatura(value){
+  if (!value) return 'Não disponível';
+  const data = new Date(value);
+  if (Number.isNaN(data.getTime())) return 'Não disponível';
+  return data.toLocaleDateString('pt-MZ', { timeZone: 'Africa/Maputo' });
+}
+
+function renderResumoAssinatura(){
+  const u = state.user;
+  if (!u) return;
+  const plano = u.planoAtual || {};
+  const vencido = plano.renovarEm && new Date(plano.renovarEm).getTime() <= Date.now();
+  const resumo = `Inscrição: ${formatarDataAssinatura(u.inscritoEm)} · ${vencido ? 'Renovação em atraso desde' : 'Renovar até'}: ${formatarDataAssinatura(plano.renovarEm)}`;
+  ['assinatura-datas', 'cfg-assinatura-datas'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = resumo;
+  });
+  const nome = document.getElementById('assinatura-plano');
+  if (nome) nome.textContent = `Plano ${plano.nome || 'Essencial'}`;
+}
+
+function renovarPlanoAtual(){
+  const plano = state.user?.planoAtual;
+  if (plano) openWhatsAppPurchase(plano.id, plano.nome, 'renovar');
+}
+
 function renderConfiguracoes(){
+  renderResumoAssinatura();
   const u = state.user;
   const planoAtual = u && u.planoAtual ? u.planoAtual : { nome: 'Essencial', preco: 12900 };
   document.getElementById('cfg-nome-negocio').textContent = u.businessName;
@@ -188,7 +215,7 @@ function renderPlanosConfig(){
   const container = document.getElementById('cfg-planos-lista');
   if(!container) return;
   const planos = state.planos && state.planos.length ? state.planos : getPlanos();
-  const isAdmin = state.user && ['super_admin', 'admin'].includes(state.user.papel);
+  const isAdmin = state.user && state.user.papel === 'super_admin';
   const planoAtualId = getPlanoAtualId();
   const ordemPlanos = ['iniciante', 'essencial', 'crescimento', 'pro'];
 
@@ -241,8 +268,8 @@ function renderPlanosConfig(){
           <span class="badge" style="display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:999px;background:${atual ? '#dcfce7' : '#eef2ff'};color:${atual ? '#166534' : '#3730a3'};font-size:12px;font-weight:700;">
             ${atual ? 'Plano atual' : 'Acesso via admin'}
           </span>
-          <button type="button" class="btn btn-outline" style="padding:8px 12px;font-size:12px;" onclick="openWhatsAppPurchase('${plano.id}','${plano.nome.replace(/'/g,"\\'")}', '${atual ? 'downgrade' : 'upgrade'}')">
-            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+          <button type="button" class="btn btn-outline" style="padding:8px 12px;font-size:12px;" onclick="openWhatsAppPurchase('${plano.id}','${plano.nome.replace(/'/g,"\\'")}', '${atual ? 'renovar' : posPlano < posAtual ? 'downgrade' : 'upgrade'}')">
+            <i class="fa-brands fa-whatsapp"></i> ${atual ? 'Renovar' : 'Escolher plano'}
           </button>
         </div>
       </div>

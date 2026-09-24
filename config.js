@@ -198,7 +198,7 @@ function openWhatsAppPurchase(planoId, planoNome, action = 'escolher'){
   const phone = '258876785909';
   const empresa = state.user?.businessName || state.user?.ownerName || 'Empresa';
   const nome = state.user?.ownerName || 'Cliente';
-  const tipoAcao = action === 'upgrade' ? 'Upgrade' : action === 'downgrade' ? 'Downgrade' : 'Escolha';
+  const tipoAcao = action === 'renovar' ? 'Renovar' : action === 'upgrade' ? 'Upgrade' : action === 'downgrade' ? 'Downgrade' : 'Escolher';
   const msg = `Olá! Gostaria de ${tipoAcao.toLowerCase()} o plano ${planoNome}. Nome: ${nome}. Empresa: ${empresa}. Quero receber mais informações e confirmar a melhor opção para o meu negócio.`;
   const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
   window.open(url, '_blank');

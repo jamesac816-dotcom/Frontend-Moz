@@ -1,3 +1,16 @@
+#screen-app .topbar { flex-wrap: wrap; }
+.assinatura-resumo { display: flex; flex: 0 0 100%; order: 3; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--border); padding-top: 10px; min-width: 0; }
+.assinatura-info { display: grid; gap: 4px; min-width: 0; }
+.assinatura-info small { font-size: 12px; line-height: 1.5; }
+.assinatura-acoes { display: flex; gap: 8px; flex-shrink: 0; }
+.assinatura-acoes .btn { min-height: 44px; padding: 8px 14px; }
+@media (max-width: 480px) {
+  .assinatura-resumo { flex-wrap: wrap; gap: 8px; }
+  .assinatura-info { flex: 1 1 100%; }
+  .assinatura-acoes { width: 100%; }
+  .assinatura-acoes .btn { flex: 1; }
+}
+
 /**
  * Responsive Mobile-First CSS para ContaFácil MZ PWA
  * 
